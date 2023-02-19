@@ -1,0 +1,14 @@
+<header>
+  <h1>Explainable Clustering</h1>
+</header>
+
+<div class="container">
+  <div class = 'scatter-dropdown'>
+    <label>Select Data Source:       </label>
+    <select>
+      <option *ngFor="let dataSource of dataSources" [value]="dataSource">
+        {{ dataSource }}
+      </option>
+    </select>
+  </div>
+</div>
