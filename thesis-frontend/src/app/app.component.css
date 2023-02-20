@@ -17,3 +17,25 @@ header {
     grid-column: 1 / 2;
     grid-row: 1 / 2;
 }
+
+.scatter-label{
+    font-weight: bold;
+    left: 50px;
+    position: relative;
+}
+
+.datasource-dropdown{
+    background-color: #4CAF50;
+    color: white;
+    width: 20%;
+    padding: 20px;
+    border: none;
+    cursor: pointer;
+    left: 60px;
+    position: relative;
+}
+
+.datasource-options{
+    width: 100%;
+    padding: 100px;
+}

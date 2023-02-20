@@ -4,11 +4,13 @@
 
 <div class="container">
   <div class = 'scatter-dropdown'>
-    <label>Select Data Source:       </label>
-    <select>
-      <option *ngFor="let dataSource of dataSources" [value]="dataSource">
+    <label for="data-source" class="scatter-label" >Select Data Source:       </label>
+    <select class="datasource-dropdown" (change)="getDataFromSource($event)">
+      <option class="datasource-options" *ngFor="let dataSource of dataSources" [value]="dataSource">
         {{ dataSource }}
       </option>
     </select>
+    <br><br>
+    <app-scatter-component [data]="data" [labels]="labels"></app-scatter-component>
   </div>
 </div>

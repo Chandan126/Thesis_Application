@@ -23,14 +23,15 @@ def read_sources():
 
 @app.get("/sources/{source}")
 def read_book_level_scatter(source):
+    print(source)
     if(source=='R2'):
-        r2 = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R2\\r2_k_result.csv')
+        r2 = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\r2_k_result.csv')
         result = r2.to_json(orient="records")
         parsed = json.loads(result)
         return parsed
 
     elif(source=='R5'):
-        r5 = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R5\\r5_k_result.csv')
+        r5 = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\r5_k_result.csv')
         result = r5.to_json(orient="records")
         parsed = json.loads(result)
         return parsed
