@@ -1,0 +1,7 @@
+<div *ngIf="localExplanations">
+    <p [innerHTML]="localExplanations['article1_data'] | highlightWords:localExplanations['important_words']"></p>
+</div>
+<br><br>
+<div *ngIf="localExplanations">
+    <p [innerHTML]="localExplanations['article2_data'] | highlightWords:localExplanations['important_words']"></p>
+</div>

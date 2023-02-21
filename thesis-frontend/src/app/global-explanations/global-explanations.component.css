@@ -1,0 +1,14 @@
+.lines .line1 {
+    color: blue;
+    font-weight: bold;
+}
+
+.lines .line2 {
+    color: red;
+    font-weight: bold;
+}
+
+.lines{
+    position: relative;
+    top: 40px;
+}

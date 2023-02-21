@@ -92,12 +92,12 @@ def get_global_explanations(clusters,result_df,input_path):
 @app.get("/global_explanations/{source}")
 def fetch_global_explanations(source):
     if(source=='R2'):
-        result_df = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R2\\r2_k_result.csv')
-        input_path = 'C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R2\\'
+        result_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\r2_k_result.csv')
+        input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\'
         clusterData = get_global_explanations(2,result_df,input_path)
     elif(source=='R5'):
-        result_df = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R5\\r5_k_result.csv')
-        input_path = 'C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R5\\'
+        result_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\r5_k_result.csv')
+        input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\'
         clusterData = get_global_explanations(5,result_df,input_path)
     return clusterData
     
@@ -105,10 +105,10 @@ def fetch_global_explanations(source):
 def fetch_global_explanations(source,selectedClusterNumber):
     clusterNum = int(selectedClusterNumber.split(" ")[1])
     if(source=='R2'):
-        result_df = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R2\\r2_k_result.csv')
+        result_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\r2_k_result.csv')
         articles = [f"Article {x}" for x in result_df[result_df.k_labels==clusterNum].index.values]
     elif(source=='R5'):
-        result_df = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R5\\r5_k_result.csv')
+        result_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\r5_k_result.csv')
         articles = [f"Article {x}" for x in result_df[result_df.k_labels==clusterNum].index.values]
     return articles
 
@@ -132,14 +132,14 @@ def fetch_local_explanations(source,article1,article2):
     article1 = int(article1.split(" ")[1])
     article2 = int(article2.split(" ")[1])
     if(source=='R2'):
-        r2 = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R2\\r2.csv')
-        input_path = 'C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R2\\'
+        r2 = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\r2.csv')
+        input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\'
         article1_data = r2.iloc[article1].content
         article2_data = r2.iloc[article2].content
         important_words = get_important_words(article1,article2,input_path)
     elif(source=='R5'):
-        r5 = pd.read_csv('C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R5\\r5.csv')
-        input_path = 'C:\\Studies\\Thesis\\Thesis_Frontend\\thesis-backend\\R5\\'
+        r5 = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\r5.csv')
+        input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\'
         article1_data = r5.iloc[article1].content
         article2_data = r5.iloc[article2].content
         important_words = get_important_words(article1,article2,input_path)

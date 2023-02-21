@@ -23,4 +23,12 @@ export class DataServiceService {
   getGlobalExplanations(source: string){
     return this.http.get(`http://127.0.0.1:8000/global_explanations/${source}`)
   }
+
+  getArticlesForCluster(source: string,selectedClusterNumber: string){
+    return this.http.get(`http://127.0.0.1:8000/get_articles/${source}/${selectedClusterNumber}`)
+  }
+
+  getLocalExplanations(source: string,article1: string,article2: string){
+    return this.http.get(`http://127.0.0.1:8000/local_explanations/${source}/${article1}/${article2}`)
+  }
 }

@@ -22,6 +22,9 @@ header {
     font-weight: bold;
     left: 50px;
     position: relative;
+    padding: 20px;
+    background-color: #e3071a;
+    color:#fff;
 }
 
 .datasource-dropdown{
@@ -37,5 +40,67 @@ header {
 
 .datasource-options{
     width: 100%;
-    padding: 100px;
+    padding: 100%;
+}
+
+.explanation-dropdown{
+    grid-column: 2 / 2;
+    grid-row: 1 / 2;
+}
+
+.explanation-button{
+    padding: 20px;
+    position: relative;
+    width: 100%;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    display: block;
+    background-color: #4CAF50;
+}
+
+.explanation-container{
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: auto;
+}
+
+.global-explanation-label{
+    padding: 20px;
+    background: #e3071a;
+    color: white;
+    font-weight: bold;
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+}
+
+.global-explanation-options{
+    padding: 20px;
+    color: white;
+    cursor: pointer;
+    background-color: #4CAF50;
+    border: none;
+    grid-column: 2 / 2;
+    grid-row: 1 / 2;
+}
+
+.local-explanation-dropdown1{
+    padding: 20px;
+    color: white;
+    cursor: pointer;
+    background-color: #614caf;
+    border: none;
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+}
+
+.local-explanation-dropdown2{
+    padding: 20px;
+    color: white;
+    cursor: pointer;
+    background-color: #af774c;
+    border: none;
+    grid-column: 2 / 2;
+    grid-row: 1 / 2;
 }

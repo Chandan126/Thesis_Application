@@ -15,6 +15,12 @@ export class AppComponent {
   clusterNumbers: any = [];
   data: any;
   globalExplanations: any;
+  selectedExplanationType: string = 'global';
+  articles: any;
+  selectedGlobalCluster: any;
+  article1: any;
+  article2: any;
+  localExplanations: any;
 
   constructor(private dataService: DataServiceService) {}
 
@@ -41,5 +47,17 @@ export class AppComponent {
       this.globalExplanations = response3;
       console.log(this.globalExplanations);
     });
+  }
+
+  selectedClusterNumberChange(){
+    this.dataService.getArticlesForCluster(this.source,this.selectedGlobalCluster)
+    .subscribe(articles => this.articles = articles);
+  }
+
+  onDropdownChange() {
+    if (this.article1 && this.article2) {
+      this.dataService.getLocalExplanations(this.source,this.article1,this.article2)
+      .subscribe(result => this.localExplanations = result);
+    }
   }
 }
