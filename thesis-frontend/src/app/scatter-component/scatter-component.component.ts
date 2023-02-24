@@ -1,5 +1,9 @@
-import { Component, Input, ViewChild, ElementRef  } from '@angular/core';
+import { Component, Input, Output, ViewChild, EventEmitter   } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
+import {
+  ActiveElement,
+  ChartEvent,
+} from 'chart.js';
 
 @Component({
   selector: 'app-scatter-component',
@@ -9,6 +13,8 @@ import { BaseChartDirective } from 'ng2-charts';
 export class ScatterComponentComponent {
   @Input() data: any[];
   @Input() labels: any;
+  @Output() isArticleExplanationChanged = new EventEmitter<boolean>();
+  @Output() pointClicked = new EventEmitter<any>();
 
   @ViewChild(BaseChartDirective) chart: BaseChartDirective;
   constructor() {
@@ -40,8 +46,19 @@ export class ScatterComponentComponent {
               }
           }
       }
-    }
-};
+    },
+    onClick: (
+      event: ChartEvent,
+      elements: ActiveElement[]
+    ) => {
+      if (elements[0]) {
+        const selected_article = this.chartData.datasets[elements[0].datasetIndex].data[elements[0].index].article_no;
+        this.pointClicked.emit(selected_article);
+        this.isArticleExplanationChanged.emit(true);
+        console.log('Clicked on ', selected_article);
+      }
+    },
+  };
   ngOnChanges(): void {
     const colours = ['blue','red','orange','green','yellow'];
     const generateDatasets: any = [];

@@ -11,10 +11,10 @@
       </option>
     </select>
     <br><br><br><br>
-    <app-scatter-component [data]="data" [labels]="labels"></app-scatter-component>
+    <app-scatter-component [data]="data" [labels]="labels" (isArticleExplanationChanged)="onIsArticleExplanationChanged($event)"  (pointClicked)="onPointClicked($event)"></app-scatter-component>
   </div>
 
-  <div class = 'explanation-dropdown'>
+  <div class = 'explanation-dropdown' *ngIf="!isArticleExplanation">
     <select class="explanation-button" [(ngModel)]="selectedExplanationType">
       <option value="global">Global Explanation</option>
       <option value="local">Local Explanation</option>
@@ -57,4 +57,9 @@
         <app-local-explanation [localExplanations]="localExplanations"></app-local-explanation>
       </div>
     </ng-template>
+  </div>
+
+  <div class = 'explanation-dropdown' *ngIf="isArticleExplanation">
+    <app-article-explanation [clickedPoint]="clickedPoint" [data]="data"></app-article-explanation>
+  </div>
 </div>

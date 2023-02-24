@@ -9,6 +9,9 @@ import { ScatterComponentComponent } from './scatter-component/scatter-component
 import { GlobalExplanationsComponent } from './global-explanations/global-explanations.component';
 import { LocalExplanationComponent } from './local-explanation/local-explanation.component';
 import { HighlightWordsPipe } from './highlight-words.pipe';
+import { ArticleExplanationComponent } from './article-explanation/article-explanation.component';
+
+
 
 @NgModule({
   declarations: [
@@ -16,7 +19,8 @@ import { HighlightWordsPipe } from './highlight-words.pipe';
     ScatterComponentComponent,
     GlobalExplanationsComponent,
     LocalExplanationComponent,
-    HighlightWordsPipe
+    HighlightWordsPipe,
+    ArticleExplanationComponent
   ],
   imports: [
     BrowserModule,

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import {DataServiceService} from './data-service.service';
 import { zip } from 'rxjs';
 
@@ -20,9 +20,11 @@ export class AppComponent {
   selectedGlobalCluster: any;
   article1: any;
   article2: any;
+  isArticleExplanation = false;
+  clickedPoint: any;
   localExplanations: any;
 
-  constructor(private dataService: DataServiceService) {}
+  constructor(private dataService: DataServiceService,private changeDetectorRef: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.getDataSourceFromAPI();
@@ -45,7 +47,6 @@ export class AppComponent {
       this.clusterNumbers = Array.from({length: this.labels}, (_, i) => `Cluster ${i}`);
       this.data = response2;
       this.globalExplanations = response3;
-      console.log(this.globalExplanations);
     });
   }
 
@@ -59,5 +60,15 @@ export class AppComponent {
       this.dataService.getLocalExplanations(this.source,this.article1,this.article2)
       .subscribe(result => this.localExplanations = result);
     }
+  }
+
+  onIsArticleExplanationChanged(value: boolean) {
+    this.isArticleExplanation = value;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  onPointClicked(point: any) {
+    this.clickedPoint = point;
+    this.changeDetectorRef.detectChanges();
   }
 }
