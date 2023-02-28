@@ -1,0 +1,61 @@
+<div class="container">
+    <div class = 'scatter-dropdown'>
+      <label for="data-source" class="scatter-label" >Select Data Source:       </label>
+      <select class="datasource-dropdown" (change)="getDataFromSource($event)">
+        <option class="datasource-options" *ngFor="let dataSource of dataSources" [value]="dataSource">
+          {{ dataSource }}
+        </option>
+      </select>
+      <br><br><br><br>
+      <app-scatter-component [data]="data" [labels]="labels" (isArticleExplanationChanged)="onIsArticleExplanationChanged($event)"  (pointClicked)="onPointClicked($event)"></app-scatter-component>
+    </div>
+  
+    <div class = 'explanation-dropdown' *ngIf="!isArticleExplanation">
+      <select class="explanation-button" [(ngModel)]="selectedExplanationType">
+        <option value="global">Global Explanation</option>
+        <option value="local">Local Explanation</option>
+      </select>
+      <br><br>
+      <div *ngIf="selectedExplanationType==='global'; else localExplanation">
+        <div class="explanation-container">
+          <label class="global-explanation-label">Select Cluster:  </label>
+          <select class="global-explanation-options" [(ngModel)]="selectedGlobalCluster">
+            <option *ngFor="let clusterNumber of clusterNumbers" [value]="clusterNumber">
+              {{ clusterNumber }}
+            </option>
+          </select>
+          <app-global-explanations [clusterNumber]="selectedGlobalCluster" [globalExplanations]="globalExplanations"></app-global-explanations>
+        </div>
+      </div>
+      <ng-template #localExplanation>
+        <div class="explanation-container">
+          <label class="global-explanation-label">Select Cluster:  </label>
+          <select class="global-explanation-options" [(ngModel)]="selectedGlobalCluster" (change)="selectedClusterNumberChange()">
+            <option *ngFor="let clusterNumber of clusterNumbers" [value]="clusterNumber">
+              {{ clusterNumber }}
+            </option>
+          </select>
+        </div>
+        <div *ngIf="articles">
+          <label class="explanation-button">Compare Articles</label>
+          <div class="explanation-container">
+            <select class="local-explanation-dropdown1"   [(ngModel)]="article1" (ngModelChange)="onDropdownChange()">
+              <option *ngFor="let article of articles" [value]="article">
+                {{ article }}
+              </option>
+            </select>
+            <select class="local-explanation-dropdown2" [(ngModel)]="article2" (ngModelChange)="onDropdownChange()">
+              <option *ngFor="let article of articles" [value]="article">
+                {{ article }}
+              </option>
+            </select>
+          </div>
+          <app-local-explanation [localExplanations]="localExplanations"></app-local-explanation>
+        </div>
+      </ng-template>
+    </div>
+  
+    <div class = 'explanation-dropdown' *ngIf="isArticleExplanation">
+      <app-article-explanation [clickedPoint]="clickedPoint" [data]="data" [articleFeatureDiv]="articleFeatureDiv"></app-article-explanation>
+    </div>
+  </div>

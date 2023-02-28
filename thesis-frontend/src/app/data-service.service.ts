@@ -31,4 +31,8 @@ export class DataServiceService {
   getLocalExplanations(source: string,article1: string,article2: string){
     return this.http.get(`http://127.0.0.1:8000/local_explanations/${source}/${article1}/${article2}`)
   }
+
+  getFeatureDivision(source: string){
+    return this.http.get(`http://127.0.0.1:8000/get_article_div/${source}`)
+  }
 }

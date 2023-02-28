@@ -1,5 +1,12 @@
 import { Component,Input,ViewChild } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
+import { MatDialog } from '@angular/material/dialog';
+import {FacetExplanationComponentComponent} from '../facet-explanation-component/facet-explanation-component.component';
+import {
+  ActiveElement,
+  ChartEvent,
+} from 'chart.js';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-article-explanation',
@@ -9,7 +16,9 @@ import { BaseChartDirective } from 'ng2-charts';
 export class ArticleExplanationComponent {
   @Input() clickedPoint: any;
   @Input() data: any[];
+  @Input() articleFeatureDiv: any;
   @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+  constructor(public dialog: MatDialog, private zone: NgZone) {}
 
   chartData: any = {
     datasets: [{
@@ -30,7 +39,20 @@ export class ArticleExplanationComponent {
       y: {
         beginAtZero: true
       }
-    }
+    },
+    onClick: (
+      event: ChartEvent,
+      elements: ActiveElement[]
+    ) => {
+      if (elements[0]) {
+          const selected_article = this.chartData.labels[elements[0].index];
+          this.zone.run(() => this.dialog.open(FacetExplanationComponentComponent, {
+            width: '550px',
+            data: { selected_article: selected_article}
+        })
+        );
+      }
+    },
   };
 
   ngOnChanges(): void {
@@ -44,7 +66,7 @@ export class ArticleExplanationComponent {
         maxBarThickness: 8,
         minBarLength: 2,
       }];
-      this.chartData.labels = [...Array(Object.values(Object.assign({}, ...requiredData)).slice(0,requiredData.length - 5).length).keys()];
+      this.chartData.labels = this.articleFeatureDiv;
     }
   this.chart.chart?.update();
   }

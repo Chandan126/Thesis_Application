@@ -55,7 +55,6 @@ export class ScatterComponentComponent {
         const selected_article = this.chartData.datasets[elements[0].datasetIndex].data[elements[0].index].article_no;
         this.pointClicked.emit(selected_article);
         this.isArticleExplanationChanged.emit(true);
-        console.log('Clicked on ', selected_article);
       }
     },
   };

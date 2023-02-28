@@ -144,3 +144,25 @@ def fetch_local_explanations(source,article1,article2):
         article2_data = r5.iloc[article2].content
         important_words = get_important_words(article1,article2,input_path)
     return {'article1_data':article1_data,'article2_data':article2_data,'important_words':important_words}
+
+
+@app.get("/get_article_div/{source}")
+def fetch_article_div(source):
+    feature_list = ['Events ','Whats ','Whens ','Wheres ','Whos ']
+    files_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
+    generated_feature_list = []
+    if(source=='R2'):
+        for i in range(5):
+            k_file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\' + files_list[i] + '_kmeans.csv'
+            df_k = pd.read_csv(k_file_input)
+            df_k = df_k.drop(['Unnamed: 0'],axis=1)
+            for j in range(len(df_k.columns)):
+              generated_feature_list.append(feature_list[i] + str(j))
+    elif(source=='R5'):
+            for i in range(5):
+              k_file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\' + files_list[i] + '_kmeans.csv'
+              df_k = pd.read_csv(k_file_input)
+              df_k = df_k.drop(['Unnamed: 0'],axis=1)
+              for j in range(len(df_k.columns)):
+                generated_feature_list.append(feature_list[i] + str(j))
+    return generated_feature_list
