@@ -6,7 +6,7 @@
             <div class="tile-header">
                 <h3>Article Content</h3>
             </div>
-                <div *ngIf="data.selected_article">{{content['article_data']}}</div>
+                <div>{{content['article_data']}}</div>
         </div>
     </mat-grid-tile>
     <mat-grid-tile>
@@ -14,7 +14,7 @@
             <div class="tile-header">
                 <h3>Article Vector Representation</h3>
             </div>
-                <app-article-explanation [clickedPoint]="data.selected_article" [data]="data.data" [articleFeatureDiv]="data.articleFeatureDiv"></app-article-explanation>
+                <app-article-explanation [clickedPoint]="data.selected_article" [data]="data.data" [articleFeatureDiv]="data.articleFeatureDiv" (barClicked)="onBarClicked($event)"></app-article-explanation>
         </div>   
     </mat-grid-tile>
   </mat-grid-list>

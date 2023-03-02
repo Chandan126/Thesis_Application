@@ -20,4 +20,9 @@ export class FacetExplanationComponentComponent implements OnInit{
     });
   }
 
+  onBarClicked(value: any): void {
+    console.log(value);
+    this.content['article_data'] = value;
+  }
+
 }
