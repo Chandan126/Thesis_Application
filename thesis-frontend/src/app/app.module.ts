@@ -13,6 +13,7 @@ import { HighlightWordsPipe } from './highlight-words.pipe';
 import { ArticleExplanationComponent } from './article-explanation/article-explanation.component';
 import { HomeComponentComponent } from './home-component/home-component.component';
 import { FacetExplanationComponentComponent } from './facet-explanation-component/facet-explanation-component.component';
+import { MatGridListModule } from '@angular/material/grid-list';
 
 
 
@@ -33,7 +34,8 @@ import { FacetExplanationComponentComponent } from './facet-explanation-componen
     FormsModule,
     HttpClientModule,
     NgChartsModule,
-    MatDialogModule
+    MatDialogModule,
+    MatGridListModule
   ],
   providers: [],
   bootstrap: [AppComponent]

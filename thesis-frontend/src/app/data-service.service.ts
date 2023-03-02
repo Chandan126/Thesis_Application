@@ -35,4 +35,8 @@ export class DataServiceService {
   getFeatureDivision(source: string){
     return this.http.get(`http://127.0.0.1:8000/get_article_div/${source}`)
   }
+
+  getArticleContent(source: string,article: string){
+    return this.http.get(`http://127.0.0.1:8000/get_article_content/${source}/${article}`)
+  }
 }

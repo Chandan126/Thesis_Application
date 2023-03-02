@@ -1,19 +1,23 @@
-import { Component, Inject, AfterViewInit  } from '@angular/core';
+import { Component, Inject, OnInit  } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {DataServiceService} from '../data-service.service';
 
 @Component({
   selector: 'app-facet-explanation-component',
   templateUrl: './facet-explanation-component.component.html',
   styleUrls: ['./facet-explanation-component.component.css']
 })
-export class FacetExplanationComponentComponent implements AfterViewInit{
-  selected_article: string;
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any) { 
-    this.selected_article = data.selected_article;
-    console.log(this.selected_article);
+export class FacetExplanationComponentComponent implements OnInit{
+
+  content: any;
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: any,private dataService: DataServiceService) { 
   }
 
-  ngAfterViewInit() {
-    console.log('Message in ngAfterViewInit:', this.selected_article);
+  ngOnInit(): void {
+    this.dataService.getArticleContent(this.data.source,this.data.selected_article).subscribe(data => {
+      this.content = data;
+    });
   }
+
 }

@@ -7,7 +7,7 @@
         </option>
       </select>
       <br><br><br><br>
-      <app-scatter-component [data]="data" [labels]="labels" (isArticleExplanationChanged)="onIsArticleExplanationChanged($event)"  (pointClicked)="onPointClicked($event)"></app-scatter-component>
+      <app-scatter-component [data]="data" [labels]="labels" [articleFeatureDiv]="articleFeatureDiv" [source]="source"></app-scatter-component>
     </div>
   
     <div class = 'explanation-dropdown' *ngIf="!isArticleExplanation">
@@ -54,8 +54,9 @@
         </div>
       </ng-template>
     </div>
-  
+  <!--
     <div class = 'explanation-dropdown' *ngIf="isArticleExplanation">
       <app-article-explanation [clickedPoint]="clickedPoint" [data]="data" [articleFeatureDiv]="articleFeatureDiv"></app-article-explanation>
-    </div>
+    </div> -->
+
   </div>

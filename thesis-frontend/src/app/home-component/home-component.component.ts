@@ -64,11 +64,6 @@ export class HomeComponentComponent {
     }
   }
 
-  onIsArticleExplanationChanged(value: boolean) {
-    this.isArticleExplanation = value;
-    this.changeDetectorRef.detectChanges();
-  }
-
   onPointClicked(point: any) {
     this.clickedPoint = point;
     this.changeDetectorRef.detectChanges();

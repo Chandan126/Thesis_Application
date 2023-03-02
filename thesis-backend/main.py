@@ -145,6 +145,15 @@ def fetch_local_explanations(source,article1,article2):
         important_words = get_important_words(article1,article2,input_path)
     return {'article1_data':article1_data,'article2_data':article2_data,'important_words':important_words}
 
+@app.get("/get_article_content/{source}/{article}")
+def fetch_local_explanations(source,article):
+    if(source=='R2'):
+        r2 = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R2\\r2.csv')
+        article_data = r2.iloc[int(article)].content
+    elif(source=='R5'):
+        r5 = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\R5\\r5.csv')
+        article_data = r5.iloc[int(article)].content
+    return {'article_data':article_data}
 
 @app.get("/get_article_div/{source}")
 def fetch_article_div(source):

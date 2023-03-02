@@ -1,9 +1,13 @@
-import { Component, Input, Output, ViewChild, EventEmitter   } from '@angular/core';
+import { Component, Input, Output, ViewChild   } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
+import { MatDialog } from '@angular/material/dialog';
 import {
   ActiveElement,
   ChartEvent,
 } from 'chart.js';
+import {FacetExplanationComponentComponent} from '../facet-explanation-component/facet-explanation-component.component';
+import { NgZone } from '@angular/core';
+
 
 @Component({
   selector: 'app-scatter-component',
@@ -13,11 +17,11 @@ import {
 export class ScatterComponentComponent {
   @Input() data: any[];
   @Input() labels: any;
-  @Output() isArticleExplanationChanged = new EventEmitter<boolean>();
-  @Output() pointClicked = new EventEmitter<any>();
-
+  @Input() articleFeatureDiv: any;
+  @Input() source: any;
   @ViewChild(BaseChartDirective) chart: BaseChartDirective;
-  constructor() {
+  
+  constructor(public dialog: MatDialog, private zone: NgZone) {
     this.data = [];
   }
 
@@ -53,8 +57,11 @@ export class ScatterComponentComponent {
     ) => {
       if (elements[0]) {
         const selected_article = this.chartData.datasets[elements[0].datasetIndex].data[elements[0].index].article_no;
-        this.pointClicked.emit(selected_article);
-        this.isArticleExplanationChanged.emit(true);
+        this.zone.run(() => this.dialog.open(FacetExplanationComponentComponent, {
+          position: { top: '5px', left: '5px' },
+          data: { selected_article: selected_article, articleFeatureDiv: this.articleFeatureDiv, data: this.data, source: this.source}
+      })
+      );
       }
     },
   };
