@@ -4,6 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatDialogModule } from '@angular/material/dialog';
+import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import {NgChartsModule} from 'ng2-charts';
 import { FormsModule } from '@angular/forms';
 import { ScatterComponentComponent } from './scatter-component/scatter-component.component';
@@ -14,6 +15,9 @@ import { ArticleExplanationComponent } from './article-explanation/article-expla
 import { HomeComponentComponent } from './home-component/home-component.component';
 import { FacetExplanationComponentComponent } from './facet-explanation-component/facet-explanation-component.component';
 import { MatGridListModule } from '@angular/material/grid-list';
+import { WordCloudComponentComponent } from './word-cloud-component/word-cloud-component.component';
+import { WordReassignComponentComponent } from './word-reassign-component/word-reassign-component.component';
+import { FeatureWeightingComponentComponent } from './feature-weighting-component/feature-weighting-component.component';
 
 
 
@@ -26,7 +30,10 @@ import { MatGridListModule } from '@angular/material/grid-list';
     HighlightWordsPipe,
     ArticleExplanationComponent,
     HomeComponentComponent,
-    FacetExplanationComponentComponent
+    FacetExplanationComponentComponent,
+    WordCloudComponentComponent,
+    WordReassignComponentComponent,
+    FeatureWeightingComponentComponent
   ],
   imports: [
     BrowserModule,
@@ -35,7 +42,8 @@ import { MatGridListModule } from '@angular/material/grid-list';
     HttpClientModule,
     NgChartsModule,
     MatDialogModule,
-    MatGridListModule
+    MatGridListModule,
+    NgxSliderModule
   ],
   providers: [],
   bootstrap: [AppComponent]

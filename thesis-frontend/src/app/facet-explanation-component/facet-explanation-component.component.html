@@ -2,20 +2,32 @@
 <mat-dialog-content>
   <mat-grid-list cols="2">
     <mat-grid-tile>
-        <div class="tile-content">
+        <div class="tile-content" *ngIf="isContent">
             <div class="tile-header">
                 <h3>Article Content</h3>
             </div>
                 <div>{{content['article_data']}}</div>
         </div>
+        <div class="tile-content" *ngIf="!isContent">
+            <div class="tile-header">
+                <h3>{{clickedBar}}</h3>
+            </div>
+            <app-word-cloud-component [clickedBar]="clickedBar" [article]="data.selected_article" [source]="data.source" (wordClicked)="onWordClicked($event)" (clusterFeedback)="onClusterFeedback($event)"></app-word-cloud-component>
+        </div>
     </mat-grid-tile>
     <mat-grid-tile>
-        <div class="tile-content">
+        <div class="tile-content" *ngIf="!isWordClick">
             <div class="tile-header">
                 <h3>Article Vector Representation</h3>
             </div>
-                <app-article-explanation [clickedPoint]="data.selected_article" [data]="data.data" [articleFeatureDiv]="data.articleFeatureDiv" (barClicked)="onBarClicked($event)"></app-article-explanation>
-        </div>   
+                <app-article-explanation [clickedPoint]="data.selected_article" [data]="data.data" [articleFeatureDiv]="data.articleFeatureDiv" (barClicked)="onBarClicked($event)" ></app-article-explanation>
+        </div>
+        <div class="tile-content" *ngIf="isWordClick">
+            <div class="tile-header">
+                <h3>Want to reassign the words?</h3>
+            </div>
+                <app-word-reassign-component [clickedWord]="clickedWord" [source]="data.source" [articleFeatureDiv]="data.articleFeatureDiv" [clickedBar]="clickedBar" ></app-word-reassign-component>
+        </div>  
     </mat-grid-tile>
   </mat-grid-list>
 </mat-dialog-content>

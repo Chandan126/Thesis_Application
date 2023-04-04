@@ -1,0 +1,10 @@
+<svg width="400" height="400"></svg>
+<div>
+    <mat-dialog-content>
+        Did you find this intersting?
+      </mat-dialog-content>
+      <mat-dialog-actions>
+        <button mat-button [mat-dialog-close]="true" (click)="onConfirmClick('yes',clickedBar)">Yes</button>
+        <button mat-button [mat-dialog-close]="false" (click)="onConfirmClick('no',clickedBar)">No</button>
+      </mat-dialog-actions>
+</div>

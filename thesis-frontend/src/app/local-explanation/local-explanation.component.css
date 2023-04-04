@@ -1,4 +1,22 @@
-.highlight {
+.lines .line1 {
+    color: blue;
+    font-weight: bold;
+}
+
+.lines .line2 {
     color: red;
     font-weight: bold;
 }
+
+.lines{
+    position: relative;
+    top: 40px;
+}
+
+.parent-container {
+    display: flex;
+  }
+  
+.child-container {
+    width: 50%;
+  }

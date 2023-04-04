@@ -52,6 +52,28 @@
     background-color: #4CAF50;
 }
 
+.configuration-button{
+    background-color: #4CAF50;
+    width: 50%;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 20px;
+}
+
+.recluster-button{
+    background-color: #4CAF50;
+    color: white;
+    left: 150px;
+    width: 20%;
+    position: relative;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 20px;
+}
+
 .explanation-container{
     display: grid;
     grid-template-columns: 50% 50%;

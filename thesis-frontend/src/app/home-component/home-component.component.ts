@@ -20,7 +20,9 @@ export class HomeComponentComponent {
   article1: any;
   article2: any;
   articleFeatureDiv: any;
+  featureWeight: any;
   isArticleExplanation = false;
+  configuration: string;
   clickedPoint: any;
   localExplanations: any;
 
@@ -67,5 +69,18 @@ export class HomeComponentComponent {
   onPointClicked(point: any) {
     this.clickedPoint = point;
     this.changeDetectorRef.detectChanges();
+  }
+
+  handleButtonClick(input: string){
+    this.configuration = input
+  }
+
+  onFeatureReweighting(value: any):void {
+    console.log(value);
+    this.featureWeight = value;
+  }
+
+  onClusterFeedback(value: any) {
+    console.log(`Cluster Feedback is ${value}`);
   }
 }

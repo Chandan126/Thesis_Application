@@ -1,6 +1,6 @@
-import { Component, Input, Output, ViewChild   } from '@angular/core';
+import { Component, Input, Output, ViewChild, EventEmitter   } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef  } from '@angular/material/dialog';
 import {
   ActiveElement,
   ChartEvent,
@@ -19,7 +19,9 @@ export class ScatterComponentComponent {
   @Input() labels: any;
   @Input() articleFeatureDiv: any;
   @Input() source: any;
+  @Output() public clusterFeedback: EventEmitter<any> = new EventEmitter<any>();
   @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+  dialogRef: MatDialogRef<FacetExplanationComponentComponent>;
   
   constructor(public dialog: MatDialog, private zone: NgZone) {
     this.data = [];
@@ -57,10 +59,17 @@ export class ScatterComponentComponent {
     ) => {
       if (elements[0]) {
         const selected_article = this.chartData.datasets[elements[0].datasetIndex].data[elements[0].index].article_no;
-        this.zone.run(() => this.dialog.open(FacetExplanationComponentComponent, {
-          position: { top: '5px', left: '5px' },
-          data: { selected_article: selected_article, articleFeatureDiv: this.articleFeatureDiv, data: this.data, source: this.source}
-      })
+        this.zone.run(() => {
+          this.dialogRef  = this.dialog.open(FacetExplanationComponentComponent, {
+            position: { top: '5px', left: '5px' },
+            data: { selected_article: selected_article, articleFeatureDiv: this.articleFeatureDiv, data: this.data, source: this.source}
+        })
+
+          this.dialogRef.afterClosed().subscribe(result => {
+            //console.log('The dialog was closed', result);
+            this.zone.run(() => this.clusterFeedback.emit(result));
+          });
+        }
       );
       }
     },

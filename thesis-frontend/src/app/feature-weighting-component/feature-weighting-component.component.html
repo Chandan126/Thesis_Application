@@ -1,0 +1,24 @@
+<form (submit)="onSubmit()"> 
+    <div>
+        <label>Whats:</label>
+        <ngx-slider [(value)]="sliderValues[0]" [options]="sliderOptions[0]"></ngx-slider>
+    </div>
+    <div>
+      <label>Whys:</label>
+      <ngx-slider [(value)]="sliderValues[1]" [options]="sliderOptions[1]"></ngx-slider>
+    </div>
+    <div>
+      <label>Whens:</label>
+      <ngx-slider [(value)]="sliderValues[2]" [options]="sliderOptions[2]"></ngx-slider>
+    </div>
+    <div>
+      <label>Wheres:</label>
+      <ngx-slider [(value)]="sliderValues[3]" [options]="sliderOptions[3]"></ngx-slider>
+    </div>
+    <div>
+      <label>Whos:</label>
+      <ngx-slider [(value)]="sliderValues[4]" [options]="sliderOptions[4]"></ngx-slider>
+    </div>
+    <button type="submit">Submit</button>
+</form>
+  
