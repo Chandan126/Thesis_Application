@@ -58,4 +58,12 @@ export class DataServiceService {
   reassignWords(source: string,facet: string,word:string,new_cluster:string){
     return this.http.get(`http://127.0.0.1:8000/reassign_words/${this.sessionId.sessionId}/${source}/${facet}/${word}/${new_cluster}`)
   }
+
+  reClusterWords(feature_sizes_k: string[],source:string,global_weights: string[],increase_local_weights: string[],decrease_local_weights:string[]){
+    const feature_sizes_k_json = JSON.stringify(feature_sizes_k);
+    const global_weights_json = JSON.stringify(global_weights);
+    const increase_local_weights_json = JSON.stringify(increase_local_weights) ? JSON.stringify(increase_local_weights) : null;
+    const decrease_local_weights_json = JSON.stringify(decrease_local_weights) ? JSON.stringify(decrease_local_weights) : null;
+    return this.http.get(`http://127.0.0.1:8000/recluster_words/${this.sessionId.sessionId}/${source}/${feature_sizes_k_json}/${global_weights_json}/${increase_local_weights_json}/${decrease_local_weights_json}`)
+  }
 }

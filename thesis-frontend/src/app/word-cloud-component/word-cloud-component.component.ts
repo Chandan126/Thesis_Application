@@ -77,7 +77,7 @@ export class WordCloudComponentComponent implements OnChanges {
     } else{
       this.notinterestingClusters = cluster;
     }
-    this.ngZone.run(() => this.clusterFeedback.emit({interestingClusters: this.interestingClusters,notinterestingClusters: this.notinterestingClusters},));
+    this.ngZone.run(() => this.clusterFeedback.emit({'interestingClusters': this.interestingClusters,'notinterestingClusters': this.notinterestingClusters},));
     //console.log(`User wants to move ${this.clickedWord} from ${this.clickedBar} to ${this.selectedCluster}`)
 }
 }

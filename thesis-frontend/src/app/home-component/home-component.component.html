@@ -6,7 +6,7 @@
           {{ dataSource }}
         </option>
       </select>
-      <button class="recluster-button" type="submit">Recluster</button>
+      <button class="recluster-button" type="submit" (click)="recluster()">Recluster</button>
       <br><br><br><br>
       <app-scatter-component [data]="data" [labels]="labels" [articleFeatureDiv]="articleFeatureDiv" [source]="source" (clusterFeedback)="onClusterFeedback($event)"></app-scatter-component>
     </div>

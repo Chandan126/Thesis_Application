@@ -1,3 +1,4 @@
+import string
 from typing import Union
 
 from fastapi import FastAPI
@@ -11,6 +12,7 @@ from sklearn.manifold import TSNE
 import numpy as np
 from uuid import uuid4
 import os
+import ast
 import shutil
 import json
 import math
@@ -83,7 +85,27 @@ def get_cluster_freq(my_dict,clusters,word):
     cf += my_dict[name+str(i)].get(word,0)
   return cf
 
-def get_global_explanations(clusters,result_df,input_path):
+def get_all_bigrams(cluster,result_df,data_path):
+  data = pd.read_csv(data_path)
+  filtered_result_df = data.iloc[result_df[result_df.k_labels==cluster].index]
+  all_bigrams = []
+  for r in filtered_result_df['bigrams']:
+    all_bigrams.extend(ast.literal_eval(r))
+  return all_bigrams
+
+def get_common_bigram(query,all_bigram):
+  result = []
+  for i in range(len(all_bigram)):
+      if query in all_bigram[i]:
+          result.append(all_bigram[i])
+  common = Counter(result).most_common(2)
+  output = []
+  for com,num in common:
+      com_words = [word.translate(str.maketrans('', '', string.punctuation)) for word in com]
+      output.append(' '.join(com_words))
+  return output
+
+def get_global_explanations(clusters,result_df,input_path,data_path):
   clusterData = {}
   facets = ['Events','Whats','Whens','Wheres','Whos']
   cluster_freq_name = 'cluster_freq'
@@ -100,25 +122,29 @@ def get_global_explanations(clusters,result_df,input_path):
       cluster_freq,cluster_words = get_famous_words(input_df,result_indexes)
       my_dict[cluster_freq_name+str(j)] = cluster_freq
       my_dict[cluster_words_name+str(j)] = cluster_words
-    event_explanations = []
     for k in range(clusters):
       cf_idf = {}
+      all_bigrams = get_all_bigrams(k,result_df,data_path)
       for l in my_dict[cluster_freq_name+str(k)]:
         cf_idf[l] = my_dict[cluster_freq_name+str(k)][l] * math.log10(clusters/(get_cluster_freq(my_dict,clusters,l)))
       sorted_dict = sorted(cf_idf, key=cf_idf.get, reverse=True)
-      clusterData['Cluster '+str(k)][facets[i]] = sorted_dict[:5]
-      event_explanations.append(sorted_dict[:5])
+      query = sorted_dict[:5]
+      result_words = []
+      for quer in query:
+        result_words.extend(get_common_bigram(quer,all_bigrams))
+      clusterData['Cluster '+str(k)][facets[i]] = result_words
   return clusterData
 
 @app.get("/global_explanations/{sessionId}/{source}")
 def fetch_global_explanations(sessionId,source):
     path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
     input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
+    data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv' 
     result_df = pd.read_csv(path)
     if(source=='R2'):
-        clusterData = get_global_explanations(2,result_df,input_path)
+        clusterData = get_global_explanations(2,result_df,input_path,data_path)
     elif(source=='R5'):
-        clusterData = get_global_explanations(5,result_df,input_path)
+        clusterData = get_global_explanations(5,result_df,input_path,data_path)
     return clusterData
     
 @app.get("/get_articles/{sessionId}/{source}/{selectedClusterNumber}")
@@ -129,11 +155,14 @@ def fetch_articles(sessionId,source,selectedClusterNumber):
     articles = [f"Article {x}" for x in result_df[result_df.k_labels==clusterNum].index.values]
     return articles
 
-def get_important_words(article1,article2,input_path):
+def get_important_words(article1,article2,input_path,data_path):
   files_list = ['all_events_k_x_means_labelled.csv','all_whats_k_x_means_labelled.csv','all_whens_k_x_means_labelled.csv','all_wheres_k_x_means_labelled.csv','all_whos_k_x_means_labelled.csv']
   article1_words = {}
   article2_words = {}
   facets = ['Events','Whats','Whens','Wheres','Whos']
+  data_df = pd.read_csv(data_path)
+  article1_bigram = ast.literal_eval(data_df.iloc[article1]['bigrams'])
+  article2_bigram = ast.literal_eval(data_df.iloc[article2]['bigrams'])
   for i in range(5):
     input_filename = input_path + files_list[i]
     result_df = pd.read_csv(input_filename)
@@ -141,18 +170,28 @@ def get_important_words(article1,article2,input_path):
     table_b = result_df[result_df.Article_no==article2]
     common_k_labels = set(table_a['k_labels']).intersection(set(table_b['k_labels']))
     for k_label in common_k_labels:
-        article1_words[facets[i]] = set(table_a[table_a['k_labels'] == k_label]['Parent_Words'].tolist())
-        article2_words[facets[i]] = set(table_b[table_b['k_labels'] == k_label]['Parent_Words'].tolist())
+        query = list(set(table_a[table_a['k_labels'] == k_label]['Parent_Words'].tolist()))
+        result_words = []
+        for quer in query:
+          result_words.extend(get_common_bigram(quer.lower(),article1_bigram))
+        #print(result_words)
+        article1_words[facets[i]] = result_words
+        result_words = []
+        query = set(table_b[table_b['k_labels'] == k_label]['Parent_Words'].tolist())
+        for quer in query:
+          result_words.extend(get_common_bigram(quer.lower(),article2_bigram))
+        article2_words[facets[i]] = result_words
   return article1_words,article2_words
 
 @app.get("/local_explanations/{sessionId}/{source}/{article1}/{article2}")
 def fetch_local_explanations(sessionId,source,article1,article2):
   article1 = int(article1.split(" ")[1])
   article2 = int(article2.split(" ")[1])
-  path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv'
-  data_df = pd.read_csv(path)
+  data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv' 
+  #path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv'
+  #data_df = pd.read_csv(path)
   input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
-  article1_words,article2_words = get_important_words(article1,article2,input_path)
+  article1_words,article2_words = get_important_words(article1,article2,input_path,data_path)
   return {'article_1':article1_words,'article_2':article2_words}
 
 @app.get("/get_article_content/{sessionId}/{source}/{article}")
@@ -296,7 +335,9 @@ def reassign_words(sessionId,source,facet,word,new_cluster):
   words_df.to_csv(filepath)
 
 
-def get_feature_vectors(data,label_feature,source_df):
+def get_feature_vectors(data,label_feature,sessionId,source):
+  source_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + 'result.csv'
+  source_df = pd.read_csv(source_path)
   all_feature_vec=[]
   if(label_feature=='k_means'):
     k = len(set(data.k_labels.values))
@@ -314,29 +355,16 @@ def get_feature_vectors(data,label_feature,source_df):
     all_feature_vec.append(feature_vec)
   return all_feature_vec
 
-def get_all_feature_vectors(book_feature,source_df):
+def get_all_feature_vectors(sessionId,source,feature_sizes_k):
   files_list = ['all_events_k_x_means_labelled','all_whats_k_x_means_labelled','all_whens_k_x_means_labelled','all_wheres_k_x_means_labelled','all_whos_k_x_means_labelled']
   output_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
   for i in range(5):
-    file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + book_feature + '\\' + files_list[i] + '.csv'
+    file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '.csv'
     df = pd.read_csv(file_input)
-    k_vectors = get_feature_vectors(df,'k_means',source_df)
+    k_vectors = get_feature_vectors(df,'k_means',sessionId,source)
     k_vector_df = pd.DataFrame(k_vectors)
-    output_file = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ book_feature + '\\' + output_list[i] + '_kmeans.csv'
+    output_file = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\' + output_list[i] + '_kmeans.csv'
     k_vector_df.to_csv(output_file)
-
-def get_final_vectors(book_features, importance=[1,1,1,1,1]):
-    files_list = ['all_events_feature_vector', 'all_whats_feature_vector', 'all_whens_feature_vector', 'all_wheres_feature_vector', 'all_whos_feature_vector']
-    base_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\{}\\{}_kmeans.csv'
-    dfs = [pd.read_csv(base_path.format(book_features, f)).drop(['Unnamed: 0'], axis=1) for f in files_list]
-    k_final_vectors = np.concatenate([df.values for df in dfs], axis=1)
-    n = 0
-    for i, df in enumerate(dfs):
-        importance_val = importance[i]
-        df_cols = df.shape[1]
-        k_final_vectors[:, n:n+df_cols] *= importance_val
-        n += df_cols
-    return k_final_vectors
 
 def get_elbow_k(vectors,config):
   model = KMeans()
@@ -359,7 +387,7 @@ def get_tsne(data,perplexity_value):
   components = tsne.fit_transform(data)
   return components
 
-def get_clustering_labels(data,config=0,k_config=0,elbow_config=0):
+def get_clustering_labels(data,k_config=0,elbow_config=0):
   if(k_config==0):
     k = get_elbow_k(data,elbow_config) 
   else:
@@ -368,7 +396,61 @@ def get_clustering_labels(data,config=0,k_config=0,elbow_config=0):
   result = pd.DataFrame(k_means_data_labels,columns=['k_labels'])
   return result
 
-def get_book_level_clustering(k_final_vectors,book_features,k):
-  k_result = get_clustering_labels(k_final_vectors,k_final_vectors,1,k)
-  k_result.to_csv('/content/drive/MyDrive/Reuters/' + book_features + '/k_means_final_clustering.csv')
+def get_book_level_clustering(k_final_vectors,k):
+  k_result = get_clustering_labels(k_final_vectors,k)
   return k_result
+
+def calculate_weights(feature_sizes_k,global_weights,increase_local_weights=None,decrease_local_weights=None):
+  features = ['Whats 0','Whens 0','Wheres 0','Whos 0']
+  all_weight = np.ones(len(feature_sizes_k))
+  n = 0
+  for i,weight in enumerate(global_weights):
+    weight = int(weight)
+    try:
+      final_indices = feature_sizes_k.index(features[i])
+    except:
+      final_indices = len(feature_sizes_k)
+    if weight==1 or weight==0:
+      all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),weight)
+    else:
+      all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),10 ** (-1*weight))
+    n = final_indices
+  if increase_local_weights!=None:
+    increase_weights = [feature_sizes_k.index(local_weight) for local_weight in increase_local_weights]
+    for i in increase_weights:
+      all_weight[i] = all_weight[i] * (0.1)
+  if decrease_local_weights!=None:
+    decreased_weights = [feature_sizes_k.index(local_weight) for local_weight in decrease_local_weights]
+    for i in decreased_weights:
+      all_weight[i] = all_weight[i] * (10)
+  return all_weight
+
+def get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights):
+    files_list = ['all_events_feature_vector', 'all_whats_feature_vector', 'all_whens_feature_vector', 'all_wheres_feature_vector', 'all_whos_feature_vector']
+    base_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\{}_kmeans.csv'
+    dfs = [pd.read_csv(base_path.format(f)).drop(['Unnamed: 0'], axis=1) for f in files_list]
+    k_final_vectors = np.concatenate([df.values for df in dfs], axis=1)
+    importance = calculate_weights(feature_sizes_k,global_weights,increase_local_weights,decrease_local_weights)
+    if importance is None:
+        importance = np.ones(k_final_vectors.shape[1])
+    k_final_vectors *= importance
+    return k_final_vectors
+
+@app.get("/recluster_words/{sessionId}/{source}/{feature_sizes_k}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
+def recluster(sessionId,source,feature_sizes_k,global_weights,increase_local_weights=None,decrease_local_weights=None):
+  output_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
+  feature_sizes_k = json.loads(feature_sizes_k)
+  global_weights = json.loads(global_weights)
+  increase_local_weights = json.loads(increase_local_weights) if increase_local_weights else None
+  decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
+  get_all_feature_vectors(sessionId,source,feature_sizes_k)
+  k_final_vectors = get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights)
+  if(source=='R2'):
+    labels_df = get_book_level_clustering(k_final_vectors,2)
+  else:
+    labels_df = get_book_level_clustering(k_final_vectors,5)
+  tsne_df = pd.DataFrame(get_tsne(k_final_vectors,30),columns=['x_axis','y_axis'])
+  result = pd.concat([pd.DataFrame(k_final_vectors),labels_df,tsne_df],axis=1)
+  #result['article_no'] = result.index
+  result.to_csv(output_path, index_label='article_no', header=True)
+  return {'message': 'Success'}

@@ -66,8 +66,9 @@ export class ArticleExplanationComponent {
         minBarLength: 2,
       }];
       console.log(this.data);
+      console.log(this.chartData.datasets[0].data);
       this.chartData.labels = this.articleFeatureDiv;
     }
-  this.chart.chart?.update();
+    this.chart.chart?.update();
   }
 }

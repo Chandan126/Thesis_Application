@@ -1,4 +1,4 @@
-import { Component,ChangeDetectorRef } from '@angular/core';
+import { Component,ChangeDetectorRef, OnInit } from '@angular/core';
 import {DataServiceService} from '../data-service.service';
 import { zip } from 'rxjs';
 
@@ -7,7 +7,7 @@ import { zip } from 'rxjs';
   templateUrl: './home-component.component.html',
   styleUrls: ['./home-component.component.css']
 })
-export class HomeComponentComponent {
+export class HomeComponentComponent implements OnInit {
   dataSources: any = [];
   source: any;
   labels: any;
@@ -20,8 +20,10 @@ export class HomeComponentComponent {
   article1: any;
   article2: any;
   articleFeatureDiv: any;
-  featureWeight: any;
+  featureWeight: any[] = [1,1,1,1,1];
   isArticleExplanation = false;
+  interestingClusters:any[] = [];
+  notInterestingClusters:any[] = [];
   configuration: string;
   clickedPoint: any;
   localExplanations: any;
@@ -81,6 +83,21 @@ export class HomeComponentComponent {
   }
 
   onClusterFeedback(value: any) {
-    console.log(`Cluster Feedback is ${value}`);
+    this.interestingClusters.push(value['interestingClusters']);
+    this.notInterestingClusters.push(value['notInterestingClusters']);
+    console.log(`Cluster Feedback is ${this.interestingClusters}`);
+    console.log(`Cluster Feedback is ${this.notInterestingClusters}`);
+  }
+
+  recluster(){
+    console.log(this.interestingClusters);
+    console.log(this.notInterestingClusters);
+    console.log(this.featureWeight);
+    const interestingClusters = this.interestingClusters.filter((val) => val !== undefined);
+    const notInterestingClusters = this.notInterestingClusters.filter((val) => val !== undefined);
+    this.dataService.reClusterWords(this.articleFeatureDiv,this.source,this.featureWeight,interestingClusters,notInterestingClusters).subscribe(
+      result => {
+      console.log('The dialog was closed', result)});
+    //console.log(this.featureWeight);
   }
 }
