@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import {NgChartsModule} from 'ng2-charts';
+import { NgxSpinnerModule } from 'ngx-spinner';
 import { FormsModule } from '@angular/forms';
 import { ScatterComponentComponent } from './scatter-component/scatter-component.component';
 import { GlobalExplanationsComponent } from './global-explanations/global-explanations.component';
@@ -18,8 +19,8 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { WordCloudComponentComponent } from './word-cloud-component/word-cloud-component.component';
 import { WordReassignComponentComponent } from './word-reassign-component/word-reassign-component.component';
 import { FeatureWeightingComponentComponent } from './feature-weighting-component/feature-weighting-component.component';
-
-
+import { LandingPopupComponent } from './landing-popup/landing-popup.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { FeatureWeightingComponentComponent } from './feature-weighting-componen
     FacetExplanationComponentComponent,
     WordCloudComponentComponent,
     WordReassignComponentComponent,
-    FeatureWeightingComponentComponent
+    FeatureWeightingComponentComponent,
+    LandingPopupComponent
   ],
   imports: [
     BrowserModule,
@@ -43,7 +45,9 @@ import { FeatureWeightingComponentComponent } from './feature-weighting-componen
     NgChartsModule,
     MatDialogModule,
     MatGridListModule,
-    NgxSliderModule
+    NgxSliderModule,
+    NgxSpinnerModule,
+    BrowserAnimationsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

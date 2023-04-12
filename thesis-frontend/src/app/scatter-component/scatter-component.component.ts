@@ -72,24 +72,26 @@ export class ScatterComponentComponent {
         }
       );
       }
-    },
+    }
   };
+
   ngOnChanges(): void {
-    const colours = ['blue','red','orange','green','yellow'];
+    const colours = ['blue','red','orange','green','yellow','purple','pink','black','turquoise','crimson'];
     const generateDatasets: any = [];
     for(let i=0; i<parseInt(this.labels); i++){
       generateDatasets.push({data: this.data.filter(d => d.k_labels == i).map((d) => {
-        return { x: d['x_axis'], y: d['y_axis'], article_no: d['article_no'] };
+        return { x: d['x_axis'], y: d['y_axis'], article_no: d['article_no'],highlight: d['highlight'] == 1 ? true : false };
           }),
           label: i,
-          pointRadius: 5,
+          pointRadius: (d: any) => d.raw.highlight ? 15 : 5,
           backgroundColor: colours[i],
+          borderColor: (d:any) => d.raw.highlight ? 'black' : 'white'
         })
     }
     if (this.data) {
       this.chartData.datasets = generateDatasets;
     }
-  this.chart.chart?.update();
+  this.chart?.chart?.update();
   }
 
 }

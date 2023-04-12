@@ -1,5 +1,6 @@
 import { Component,ChangeDetectorRef, OnInit } from '@angular/core';
-import {DataServiceService} from '../data-service.service';
+import { DataServiceService } from '../data-service.service';
+import { NgxSpinnerService } from 'ngx-spinner';
 import { zip } from 'rxjs';
 
 @Component({
@@ -20,15 +21,19 @@ export class HomeComponentComponent implements OnInit {
   article1: any;
   article2: any;
   articleFeatureDiv: any;
+  query: any;
   featureWeight: any[] = [1,1,1,1,1];
   isArticleExplanation = false;
   interestingClusters:any[] = [];
   notInterestingClusters:any[] = [];
-  configuration: string;
+  configuration: string | undefined;
   clickedPoint: any;
   localExplanations: any;
 
-  constructor(private dataService: DataServiceService,private changeDetectorRef: ChangeDetectorRef) {}
+  constructor(private dataService: DataServiceService,
+    private changeDetectorRef: ChangeDetectorRef,
+    private spinner: NgxSpinnerService
+    ) {}
 
   ngOnInit() {
     this.getDataSourceFromAPI();
@@ -40,11 +45,12 @@ export class HomeComponentComponent implements OnInit {
     });
   }
 
-  getDataFromSource(event: any){
+  getDataFromSource(event: any,query: string | undefined){
+    this.spinner.show();
     this.source = event.target.value;
     zip(
       this.dataService.getDataLabels(this.source),
-      this.dataService.getData(this.source),
+      this.dataService.getData(this.source,query),
       this.dataService.getGlobalExplanations(this.source),
       this.dataService.getFeatureDivision(this.source)
     ).subscribe(([response1, response2, response3, response4]) => {
@@ -53,6 +59,7 @@ export class HomeComponentComponent implements OnInit {
       this.data = response2;
       this.globalExplanations = response3;
       this.articleFeatureDiv = response4;
+      this.spinner.hide();
     });
   }
 
@@ -77,6 +84,11 @@ export class HomeComponentComponent implements OnInit {
     this.configuration = input
   }
 
+  search(){
+    console.log(this.query);
+    this.getDataFromSource({target:{value:this.source}},this.query);
+  }
+
   onFeatureReweighting(value: any):void {
     console.log(value);
     this.featureWeight = value;
@@ -90,14 +102,16 @@ export class HomeComponentComponent implements OnInit {
   }
 
   recluster(){
-    console.log(this.interestingClusters);
-    console.log(this.notInterestingClusters);
-    console.log(this.featureWeight);
+    this.spinner.show();
+    this.configuration = undefined;
     const interestingClusters = this.interestingClusters.filter((val) => val !== undefined);
     const notInterestingClusters = this.notInterestingClusters.filter((val) => val !== undefined);
     this.dataService.reClusterWords(this.articleFeatureDiv,this.source,this.featureWeight,interestingClusters,notInterestingClusters).subscribe(
       result => {
-      console.log('The dialog was closed', result)});
+      console.log('The dialog was closed', result);
+      this.spinner.hide();
+      this.getDataFromSource({target:{value:this.source}},undefined);
+    });
     //console.log(this.featureWeight);
   }
 }

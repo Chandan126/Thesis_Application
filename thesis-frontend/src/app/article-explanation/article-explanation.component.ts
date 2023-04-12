@@ -57,7 +57,7 @@ export class ArticleExplanationComponent {
     console.log(requiredData);
     console.log(this.articleFeatureDiv);
     if (this.data) {
-      this.chartData.datasets = [{data: Object.values(Object.assign({}, ...requiredData)).slice(0,requiredData.length - 5),
+      this.chartData.datasets = [{data: Object.values(Object.assign({}, ...requiredData)).slice(0,requiredData.length - 6),
         borderWidth: 1,
         label: 'Article Explanation ' + this.clickedPoint,
         barPercentage: 0.5,

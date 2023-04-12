@@ -1,6 +1,6 @@
 import string
 from typing import Union
-
+from sklearn.metrics.pairwise import cosine_similarity
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 from yellowbrick.cluster import KElbowVisualizer
 from sklearn.manifold import TSNE
 import numpy as np
+import joblib
 from uuid import uuid4
 import os
 import ast
@@ -29,14 +30,16 @@ app.add_middleware(
 
 R2_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R2'
 R5_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R5'
+Trec_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\TREC'
 parent_dir = 'C:\\Studies\\Thesis_Application\\thesis-backend'
-sources = ['R2','R5']
+search_enabled = False
+sources = ['R2','R5','TREC']
 @app.get("/session")
 def create_session():
     session_id = str(uuid4())
     path = os.path.join(parent_dir,session_id)
     os.mkdir(path)
-    src = [R2_path,R5_path]
+    src = [R2_path,R5_path,Trec_path]
     for i,source in enumerate(src):
        new_path = os.path.join(path,sources[i])
        os.mkdir(new_path)
@@ -49,12 +52,30 @@ def create_session():
 
 @app.get("/sources")
 def read_sources():
-    return ['R2','R5']
+    return ['R2','R5','TREC']
 
-@app.get("/sources/{sessionId}/{source}")
-def read_book_level_scatter(sessionId,source):
+def search(sessionId,source,query):
+  vectorizer_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\vectorizer.pkl'
+  tfidf_matrix_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\tfidf_matrix.pkl'
+  vectorizer = joblib.load(vectorizer_path)
+  tfidf_matrix = joblib.load(tfidf_matrix_path)
+  query_tfidf = vectorizer.transform([query])
+  cosine_similarities = cosine_similarity(query_tfidf, tfidf_matrix).flatten()
+  similar_indices = cosine_similarities.argsort()[:-11:-1]
+  return similar_indices
+
+
+@app.get("/sources/{sessionId}/{source}/{query}")
+def read_book_level_scatter(sessionId,source,query):
     path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
+    #print(query)
     result_df = pd.read_csv(path)
+    result_df['highlight'] = np.zeros(len(result_df))
+    if(query!='undefined'):
+      print(query)
+      result_index = search(sessionId,source,query)
+      print(result_index)
+      result_df.loc[result_index, 'highlight'] = 1
     result = result_df.to_json(orient="records")
     parsed = json.loads(result)
     return parsed
@@ -65,6 +86,8 @@ def get_label_number(source):
         return '2'
     elif(source=='R5'):
         return '5'
+    elif(source=='TREC'):
+        return '11'
 
 def get_famous_words(df,indices):
   unique_words = []
@@ -145,6 +168,8 @@ def fetch_global_explanations(sessionId,source):
         clusterData = get_global_explanations(2,result_df,input_path,data_path)
     elif(source=='R5'):
         clusterData = get_global_explanations(5,result_df,input_path,data_path)
+    elif(source=='TREC'):
+        clusterData = get_global_explanations(11,result_df,input_path,data_path)
     return clusterData
     
 @app.get("/get_articles/{sessionId}/{source}/{selectedClusterNumber}")
@@ -188,8 +213,6 @@ def fetch_local_explanations(sessionId,source,article1,article2):
   article1 = int(article1.split(" ")[1])
   article2 = int(article2.split(" ")[1])
   data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv' 
-  #path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv'
-  #data_df = pd.read_csv(path)
   input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
   article1_words,article2_words = get_important_words(article1,article2,input_path,data_path)
   return {'article_1':article1_words,'article_2':article2_words}
@@ -199,7 +222,8 @@ def fetch_local_explanations(sessionId,source,article):
     path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv'
     data_df = pd.read_csv(path)
     article_data = data_df.iloc[int(article)].content
-    return {'article_data':article_data}
+    article_title = data_df.iloc[int(article)].title
+    return {'article_data':article_data,'article_title':article_title}
 
 @app.get("/get_article_div/{sessionId}/{source}")
 def fetch_article_div(sessionId,source):
@@ -447,10 +471,13 @@ def recluster(sessionId,source,feature_sizes_k,global_weights,increase_local_wei
   k_final_vectors = get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights)
   if(source=='R2'):
     labels_df = get_book_level_clustering(k_final_vectors,2)
-  else:
+  elif(source=='R5'):
     labels_df = get_book_level_clustering(k_final_vectors,5)
+  elif(source=='TREC'):
+    labels_df = get_book_level_clustering(k_final_vectors,11)
   tsne_df = pd.DataFrame(get_tsne(k_final_vectors,30),columns=['x_axis','y_axis'])
   result = pd.concat([pd.DataFrame(k_final_vectors),labels_df,tsne_df],axis=1)
   #result['article_no'] = result.index
   result.to_csv(output_path, index_label='article_no', header=True)
   return {'message': 'Success'}
+
