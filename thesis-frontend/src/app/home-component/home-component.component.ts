@@ -1,6 +1,8 @@
 import { Component,ChangeDetectorRef, OnInit } from '@angular/core';
 import { DataServiceService } from '../data-service.service';
+import { LandingPopupComponent } from '../landing-popup/landing-popup.component';
 import { NgxSpinnerService } from 'ngx-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { zip } from 'rxjs';
 
 @Component({
@@ -32,12 +34,23 @@ export class HomeComponentComponent implements OnInit {
 
   constructor(private dataService: DataServiceService,
     private changeDetectorRef: ChangeDetectorRef,
-    private spinner: NgxSpinnerService
+    private spinner: NgxSpinnerService,private dialog: MatDialog
     ) {}
 
   ngOnInit() {
+    /*const sessionId = this.dataService.getSessionId();
+    if(sessionId){
+      this.getDataSourceFromAPI();
+    }
+    else{
+      const dialogRef = this.dialog.open(LandingPopupComponent, {
+        width: '250px',
+        disableClose: true // add this to prevent closing the popup with ESC or clicking outside of it
+      });
+    }*/
     this.getDataSourceFromAPI();
   }
+
 
   getDataSourceFromAPI() {
     this.dataService.getSourceData().subscribe(data => {
@@ -86,7 +99,8 @@ export class HomeComponentComponent implements OnInit {
 
   search(){
     console.log(this.query);
-    this.getDataFromSource({target:{value:this.source}},this.query);
+    //this.getDataFromSource({target:{value:this.source}},this.query);
+    this.dataService.getData(this.source,this.query).subscribe(response => this.data = response)
   }
 
   onFeatureReweighting(value: any):void {
@@ -94,19 +108,13 @@ export class HomeComponentComponent implements OnInit {
     this.featureWeight = value;
   }
 
-  onClusterFeedback(value: any) {
-    this.interestingClusters.push(value['interestingClusters']);
-    this.notInterestingClusters.push(value['notInterestingClusters']);
-    console.log(`Cluster Feedback is ${this.interestingClusters}`);
-    console.log(`Cluster Feedback is ${this.notInterestingClusters}`);
-  }
-
   recluster(){
+    const result = this.dataService.getUserFeedbacks();
+    this.query = '';
+    console.log(result);
     this.spinner.show();
     this.configuration = undefined;
-    const interestingClusters = this.interestingClusters.filter((val) => val !== undefined);
-    const notInterestingClusters = this.notInterestingClusters.filter((val) => val !== undefined);
-    this.dataService.reClusterWords(this.articleFeatureDiv,this.source,this.featureWeight,interestingClusters,notInterestingClusters).subscribe(
+    this.dataService.reClusterWords(this.articleFeatureDiv,this.source,this.featureWeight,result['interestingClusters'],result['notInterestingClusters'],result['relevantDocs'],result['notRelevantDocs']).subscribe(
       result => {
       console.log('The dialog was closed', result);
       this.spinner.hide();

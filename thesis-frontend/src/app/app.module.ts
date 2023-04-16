@@ -21,6 +21,8 @@ import { WordReassignComponentComponent } from './word-reassign-component/word-r
 import { FeatureWeightingComponentComponent } from './feature-weighting-component/feature-weighting-component.component';
 import { LandingPopupComponent } from './landing-popup/landing-popup.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatButtonModule } from '@angular/material/button';
+import {  MatCardModule } from '@angular/material/card';
 
 @NgModule({
   declarations: [
@@ -47,9 +49,12 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatGridListModule,
     NgxSliderModule,
     NgxSpinnerModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    MatButtonModule,
+    MatCardModule
   ],
   providers: [],
+  entryComponents: [AppComponent,LandingPopupComponent,ScatterComponentComponent,FacetExplanationComponentComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

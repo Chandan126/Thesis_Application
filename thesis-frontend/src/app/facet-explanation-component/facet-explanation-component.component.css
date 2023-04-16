@@ -1,7 +1,6 @@
 mat-grid-tile {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
   }
   
@@ -11,6 +10,10 @@ mat-grid-tile {
     align-items: center;
 }
   
-.tile-header {
+/*.tile-header {
     margin-bottom: 10px;
 }
+
+/*::ng-deep .cdk-overlay-pane {
+    align-items: center;
+}*/

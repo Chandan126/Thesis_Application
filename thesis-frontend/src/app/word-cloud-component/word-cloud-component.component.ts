@@ -16,8 +16,8 @@ export class WordCloudComponentComponent implements OnChanges {
   @Input() source: any;
   @Output() public wordClicked: EventEmitter<any> = new EventEmitter<any>();
   @Output() public clusterFeedback: EventEmitter<any> = new EventEmitter<any>();
-  interestingClusters: any;
-  notinterestingClusters: any;
+  interestingClusters: any = [];
+  notinterestingClusters: any = [];
   data: any;
 
   constructor(private dataService: DataServiceService, private cdr: ChangeDetectorRef, private ngZone:NgZone) {
@@ -73,11 +73,10 @@ export class WordCloudComponentComponent implements OnChanges {
 
   onConfirmClick(resp: any, cluster: any) {
     if(resp==='yes'){
-      this.interestingClusters = cluster;
+      this.dataService.storeClusterFeedback(cluster, true);
     } else{
-      this.notinterestingClusters = cluster;
+      this.dataService.storeClusterFeedback(cluster, false);
     }
-    this.ngZone.run(() => this.clusterFeedback.emit({'interestingClusters': this.interestingClusters,'notinterestingClusters': this.notinterestingClusters},));
     //console.log(`User wants to move ${this.clickedWord} from ${this.clickedBar} to ${this.selectedCluster}`)
 }
 }

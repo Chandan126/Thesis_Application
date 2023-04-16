@@ -5,9 +5,11 @@ import {
   ActiveElement,
   ChartEvent,
 } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import { Chart } from 'chart.js';
 import {FacetExplanationComponentComponent} from '../facet-explanation-component/facet-explanation-component.component';
 import { NgZone } from '@angular/core';
-
+Chart.register(zoomPlugin);
 
 @Component({
   selector: 'app-scatter-component',
@@ -51,7 +53,22 @@ export class ScatterComponentComponent {
                 return `Article No: ${articleNo}`;
               }
           }
-      }
+      },
+      zoom: {
+        zoom: {
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true,
+          },
+          mode: 'xy',
+        },
+        pan: {
+          enabled: true,
+          mode: 'xy',
+        },
+      },
     },
     onClick: (
       event: ChartEvent,
@@ -61,14 +78,9 @@ export class ScatterComponentComponent {
         const selected_article = this.chartData.datasets[elements[0].datasetIndex].data[elements[0].index].article_no;
         this.zone.run(() => {
           this.dialogRef  = this.dialog.open(FacetExplanationComponentComponent, {
-            position: { top: '5px', left: '5px' },
+            width:'1500px',height:'700px',
             data: { selected_article: selected_article, articleFeatureDiv: this.articleFeatureDiv, data: this.data, source: this.source}
         })
-
-          this.dialogRef.afterClosed().subscribe(result => {
-            //console.log('The dialog was closed', result);
-            this.zone.run(() => this.clusterFeedback.emit(result));
-          });
         }
       );
       }
@@ -78,14 +90,16 @@ export class ScatterComponentComponent {
   ngOnChanges(): void {
     const colours = ['blue','red','orange','green','yellow','purple','pink','black','turquoise','crimson'];
     const generateDatasets: any = [];
+    console.log(this.data);
     for(let i=0; i<parseInt(this.labels); i++){
       generateDatasets.push({data: this.data.filter(d => d.k_labels == i).map((d) => {
-        return { x: d['x_axis'], y: d['y_axis'], article_no: d['article_no'],highlight: d['highlight'] == 1 ? true : false };
+        return { x: d['x_axis'], y: d['y_axis'], article_no: d['article_no'],highlight: d['highlight'] == 1 && d['relevance'] == 1 ? true : false };
           }),
           label: i,
           pointRadius: (d: any) => d.raw.highlight ? 15 : 5,
           backgroundColor: colours[i],
-          borderColor: (d:any) => d.raw.highlight ? 'black' : 'white'
+          borderColor: (d:any) => d.raw.highlight ? 'black' : 'white',
+          order: (d:any) => d.raw.highlight ? 1 : 0,
         })
     }
     if (this.data) {

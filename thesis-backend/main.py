@@ -1,3 +1,4 @@
+from operator import itemgetter
 import string
 from typing import Union
 from sklearn.metrics.pairwise import cosine_similarity
@@ -32,7 +33,6 @@ R2_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R2'
 R5_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R5'
 Trec_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\TREC'
 parent_dir = 'C:\\Studies\\Thesis_Application\\thesis-backend'
-search_enabled = False
 sources = ['R2','R5','TREC']
 @app.get("/session")
 def create_session():
@@ -65,16 +65,15 @@ def search(sessionId,source,query):
   return similar_indices
 
 
+
 @app.get("/sources/{sessionId}/{source}/{query}")
 def read_book_level_scatter(sessionId,source,query):
     path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
     #print(query)
     result_df = pd.read_csv(path)
-    result_df['highlight'] = np.zeros(len(result_df))
     if(query!='undefined'):
       print(query)
       result_index = search(sessionId,source,query)
-      print(result_index)
       result_df.loc[result_index, 'highlight'] = 1
     result = result_df.to_json(orient="records")
     parsed = json.loads(result)
@@ -401,27 +400,29 @@ def get_elbow_k(vectors,config):
   visualizer.fit(vectors) 
   return visualizer.elbow_value_
 
-def get_kmeans_clusters(k,data):
-  kmeans = KMeans(n_clusters=k, random_state=0).fit(data)
-  data_labels = kmeans.predict(data)
-  return data_labels,kmeans
+def get_kmeans_clusters(k,importance,data):
+  data_weighted = data * importance
+  kmeans = KMeans(n_clusters=k, random_state=0).fit(data_weighted)
+  data_labels = kmeans.predict(data_weighted)
+  #data_transformed = kmeans.transform(data)
+  return data_labels
 
 def get_tsne(data,perplexity_value):
   tsne = TSNE(n_components=2, learning_rate='auto',init='random',perplexity=perplexity_value)
   components = tsne.fit_transform(data)
   return components
 
-def get_clustering_labels(data,k_config=0,elbow_config=0):
+def get_clustering_labels(data,importance,k_config=0,elbow_config=0):
   if(k_config==0):
     k = get_elbow_k(data,elbow_config) 
   else:
     k=k_config
-  k_means_data_labels,kmeans = get_kmeans_clusters(k,data)
+  k_means_data_labels = get_kmeans_clusters(k,importance,data)
   result = pd.DataFrame(k_means_data_labels,columns=['k_labels'])
   return result
 
-def get_book_level_clustering(k_final_vectors,k):
-  k_result = get_clustering_labels(k_final_vectors,k)
+def get_book_level_clustering(k_final_vectors,importance,k):
+  k_result = get_clustering_labels(k_final_vectors,importance,k)
   return k_result
 
 def calculate_weights(feature_sizes_k,global_weights,increase_local_weights=None,decrease_local_weights=None):
@@ -434,19 +435,23 @@ def calculate_weights(feature_sizes_k,global_weights,increase_local_weights=None
       final_indices = feature_sizes_k.index(features[i])
     except:
       final_indices = len(feature_sizes_k)
-    if weight==1 or weight==0:
-      all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),weight)
-    else:
-      all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),10 ** (-1*weight))
+    if weight==1:
+      weight=0.5
+    elif weight==2:
+      weight=1
+    elif weight==4:
+      weight=5
+    all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),weight)
     n = final_indices
   if increase_local_weights!=None:
     increase_weights = [feature_sizes_k.index(local_weight) for local_weight in increase_local_weights]
     for i in increase_weights:
-      all_weight[i] = all_weight[i] * (0.1)
+      all_weight[i] = all_weight[i] * (4)
   if decrease_local_weights!=None:
     decreased_weights = [feature_sizes_k.index(local_weight) for local_weight in decrease_local_weights]
     for i in decreased_weights:
-      all_weight[i] = all_weight[i] * (10)
+      all_weight[i] = all_weight[i] * (0.5)
+  #print(all_weight)
   return all_weight
 
 def get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights):
@@ -457,26 +462,31 @@ def get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_l
     importance = calculate_weights(feature_sizes_k,global_weights,increase_local_weights,decrease_local_weights)
     if importance is None:
         importance = np.ones(k_final_vectors.shape[1])
-    k_final_vectors *= importance
-    return k_final_vectors
+    return k_final_vectors,importance
 
-@app.get("/recluster_words/{sessionId}/{source}/{feature_sizes_k}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
-def recluster(sessionId,source,feature_sizes_k,global_weights,increase_local_weights=None,decrease_local_weights=None):
+@app.get("/recluster_words/{sessionId}/{source}/{feature_sizes_k}/{relevant_docs}/{not_relevant_docs}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
+def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,increase_local_weights=None,decrease_local_weights=None,):
   output_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
   feature_sizes_k = json.loads(feature_sizes_k)
   global_weights = json.loads(global_weights)
+  relevant_docs = json.loads(relevant_docs)
+  not_relevant_docs = json.loads(not_relevant_docs)
   increase_local_weights = json.loads(increase_local_weights) if increase_local_weights else None
   decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
   get_all_feature_vectors(sessionId,source,feature_sizes_k)
-  k_final_vectors = get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights)
+  k_final_vectors,importance = get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights)
   if(source=='R2'):
-    labels_df = get_book_level_clustering(k_final_vectors,2)
+    labels_df = get_book_level_clustering(k_final_vectors,importance,2)
   elif(source=='R5'):
-    labels_df = get_book_level_clustering(k_final_vectors,5)
+    labels_df = get_book_level_clustering(k_final_vectors,importance,5)
   elif(source=='TREC'):
-    labels_df = get_book_level_clustering(k_final_vectors,11)
-  tsne_df = pd.DataFrame(get_tsne(k_final_vectors,30),columns=['x_axis','y_axis'])
+    labels_df = get_book_level_clustering(k_final_vectors,importance,11)
+  tsne_df = pd.DataFrame(get_tsne(k_final_vectors,20),columns=['x_axis','y_axis'])
   result = pd.concat([pd.DataFrame(k_final_vectors),labels_df,tsne_df],axis=1)
+  result['relevance'] = np.zeros(len(result))
+  result.loc[relevant_docs, 'highlight'] = 1
+  result.loc[relevant_docs, 'relevance'] = 1
+  result.loc[not_relevant_docs, 'relevance'] = 0
   #result['article_no'] = result.index
   result.to_csv(output_path, index_label='article_no', header=True)
   return {'message': 'Success'}

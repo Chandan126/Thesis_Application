@@ -32,14 +32,16 @@ export class FacetExplanationComponentComponent implements OnInit{
   }
 
   onWordClicked(value: any):void {
-    console.log(value);
     this.clickedWord = value;
     this.isWordClick = true;
   }
 
-  onClusterFeedback(value: any) {
-    //this.ngZone.run(() => this.clusterFeedback.emit(value));
-    this.ngZone.run(() => this.dialogRef.close(value));
+  onRelevanceClick(){
+    this.dataService.storeDocsFeedback(this.data.selected_article, true);
+  }
+
+  onNotRelevanceClick(){
+    this.dataService.storeDocsFeedback(this.data.selected_article, false);
   }
 
 }

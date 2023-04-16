@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./landing-popup.component.css']
 })
 export class LandingPopupComponent implements OnInit{
-  constructor(private dialogRef: MatDialogRef<LandingPopupComponent>,private dataService: DataServiceService, private router: Router) {}
+  constructor(private dataService: DataServiceService, private router: Router) {}
 
   ngOnInit() {
     console.log('Login Started');
@@ -17,10 +17,11 @@ export class LandingPopupComponent implements OnInit{
 
   login() {
     this.dataService.initSession();
-    this.dialogRef.close();
+    //this.dialogRef.close();
+    this.router.navigateByUrl('/home');
   }
 
-  logout() {
+  /*logout() {
     this.dialogRef.close('logout'); // pass 'logout' as the result to trigger the redirection to login page
-  }
+  }*/
 }

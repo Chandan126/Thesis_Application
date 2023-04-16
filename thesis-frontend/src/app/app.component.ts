@@ -22,11 +22,11 @@ export class AppComponent implements OnInit {
       console.log(`Session already started ${sessionId}`);
       this.router.navigateByUrl('/home');
     } else {
-      this.showLandingPopup();
+      this.router.navigateByUrl('/login');
     }
   }
 
-  showLandingPopup(): void {
+  /*showLandingPopup(): void {
     const dialogRef = this.dialog.open(LandingPopupComponent, {
       width: '250px',
       disableClose: true // add this to prevent closing the popup with ESC or clicking outside of it
@@ -42,13 +42,15 @@ export class AppComponent implements OnInit {
         this.router.navigateByUrl('/home');
       }
     });
-  }
+  }*/
 
   logout() {
-    localStorage.removeItem('sessionId');
+    if(localStorage.getItem('sessionId')!==undefined){
+      localStorage.removeItem('sessionId');
+    }
     console.log('Session removed');
     // pass 'logout' as the result to dialogRef.afterClosed() to trigger the redirection to login page
-    this.dialog.closeAll();
-    this.showLandingPopup();
+    //this.dialog.closeAll();
+    this.router.navigateByUrl('/login');
   }
 }
