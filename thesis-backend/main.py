@@ -8,6 +8,7 @@ import pandas as pd
 from collections import Counter
 from scipy.spatial.distance import cosine
 from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
 from yellowbrick.cluster import KElbowVisualizer
 from sklearn.manifold import TSNE
 import numpy as np
@@ -68,13 +69,14 @@ def search(sessionId,source,query):
 
 @app.get("/sources/{sessionId}/{source}/{query}")
 def read_book_level_scatter(sessionId,source,query):
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
+    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
     #print(query)
-    result_df = pd.read_csv(path)
+    result_df = pd.read_parquet(path)
     if(query!='undefined'):
-      print(query)
+      #print(query)
       result_index = search(sessionId,source,query)
       result_df.loc[result_index, 'highlight'] = 1
+    result_df.to_parquet(path,compression='gzip')
     result = result_df.to_json(orient="records")
     parsed = json.loads(result)
     return parsed
@@ -108,7 +110,7 @@ def get_cluster_freq(my_dict,clusters,word):
   return cf
 
 def get_all_bigrams(cluster,result_df,data_path):
-  data = pd.read_csv(data_path)
+  data = pd.read_parquet(data_path)
   filtered_result_df = data.iloc[result_df[result_df.k_labels==cluster].index]
   all_bigrams = []
   for r in filtered_result_df['bigrams']:
@@ -117,9 +119,9 @@ def get_all_bigrams(cluster,result_df,data_path):
 
 def get_common_bigram(query,all_bigram):
   result = []
-  for i in range(len(all_bigram)):
-      if query in all_bigram[i]:
-          result.append(all_bigram[i])
+  for bigram in all_bigram:
+      if query in bigram[0] or query in bigram[1]:
+          result.append(bigram)
   common = Counter(result).most_common(2)
   output = []
   for com,num in common:
@@ -136,8 +138,8 @@ def get_global_explanations(clusters,result_df,input_path,data_path):
   for i in range(clusters):
     clusterData['Cluster '+str(i)] = {}
   for i in range(5):
-    input = input_path + files_list[i] + '.csv' 
-    input_df = pd.read_csv(input)
+    input = input_path + files_list[i] + '.parquet.gzip' 
+    input_df = pd.read_parquet(input)
     my_dict = {}
     for j in range(clusters):
       result_indexes = result_df[result_df.k_labels==j].index
@@ -159,10 +161,10 @@ def get_global_explanations(clusters,result_df,input_path,data_path):
 
 @app.get("/global_explanations/{sessionId}/{source}")
 def fetch_global_explanations(sessionId,source):
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
+    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
     input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
-    data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv' 
-    result_df = pd.read_csv(path)
+    data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip' 
+    result_df = pd.read_parquet(path)
     if(source=='R2'):
         clusterData = get_global_explanations(2,result_df,input_path,data_path)
     elif(source=='R5'):
@@ -174,52 +176,55 @@ def fetch_global_explanations(sessionId,source):
 @app.get("/get_articles/{sessionId}/{source}/{selectedClusterNumber}")
 def fetch_articles(sessionId,source,selectedClusterNumber):
     clusterNum = int(selectedClusterNumber.split(" ")[1])
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
-    result_df = pd.read_csv(path)
+    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
+    result_df = pd.read_parquet(path)
     articles = [f"Article {x}" for x in result_df[result_df.k_labels==clusterNum].index.values]
     return articles
 
 def get_important_words(article1,article2,input_path,data_path):
-  files_list = ['all_events_k_x_means_labelled.csv','all_whats_k_x_means_labelled.csv','all_whens_k_x_means_labelled.csv','all_wheres_k_x_means_labelled.csv','all_whos_k_x_means_labelled.csv']
+  files_list = ['all_events_k_x_means_labelled.parquet.gzip','all_whats_k_x_means_labelled.parquet.gzip','all_whens_k_x_means_labelled.parquet.gzip','all_wheres_k_x_means_labelled.parquet.gzip','all_whos_k_x_means_labelled.parquet.gzip']
   article1_words = {}
   article2_words = {}
   facets = ['Events','Whats','Whens','Wheres','Whos']
-  data_df = pd.read_csv(data_path)
+  data_df = pd.read_parquet(data_path)
   article1_bigram = ast.literal_eval(data_df.iloc[article1]['bigrams'])
   article2_bigram = ast.literal_eval(data_df.iloc[article2]['bigrams'])
   for i in range(5):
     input_filename = input_path + files_list[i]
-    result_df = pd.read_csv(input_filename)
+    result_df = pd.read_parquet(input_filename)
     table_a = result_df[result_df.Article_no==article1]
     table_b = result_df[result_df.Article_no==article2]
     common_k_labels = set(table_a['k_labels']).intersection(set(table_b['k_labels']))
+    #print(common_k_labels)
     for k_label in common_k_labels:
         query = list(set(table_a[table_a['k_labels'] == k_label]['Parent_Words'].tolist()))
         result_words = []
         for quer in query:
           result_words.extend(get_common_bigram(quer.lower(),article1_bigram))
         #print(result_words)
-        article1_words[facets[i]] = result_words
+        if(len(result_words)!=0):
+          article1_words[facets[i]] = result_words
         result_words = []
-        query = set(table_b[table_b['k_labels'] == k_label]['Parent_Words'].tolist())
+        query = list(set(table_b[table_b['k_labels'] == k_label]['Parent_Words'].tolist()))
         for quer in query:
           result_words.extend(get_common_bigram(quer.lower(),article2_bigram))
-        article2_words[facets[i]] = result_words
+        if(len(result_words)!=0):
+          article2_words[facets[i]] = result_words
   return article1_words,article2_words
 
 @app.get("/local_explanations/{sessionId}/{source}/{article1}/{article2}")
 def fetch_local_explanations(sessionId,source,article1,article2):
   article1 = int(article1.split(" ")[1])
   article2 = int(article2.split(" ")[1])
-  data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv' 
+  data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip' 
   input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
   article1_words,article2_words = get_important_words(article1,article2,input_path,data_path)
   return {'article_1':article1_words,'article_2':article2_words}
 
 @app.get("/get_article_content/{sessionId}/{source}/{article}")
 def fetch_local_explanations(sessionId,source,article):
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.csv'
-    data_df = pd.read_csv(path)
+    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip'
+    data_df = pd.read_parquet(path)
     article_data = data_df.iloc[int(article)].content
     article_title = data_df.iloc[int(article)].title
     return {'article_data':article_data,'article_title':article_title}
@@ -230,8 +235,8 @@ def fetch_article_div(sessionId,source):
     files_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
     generated_feature_list = []
     for i in range(5):
-       path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '_kmeans.csv'
-       df_k = pd.read_csv(path)
+       path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '_kmeans.parquet.gzip'
+       df_k = pd.read_parquet(path)
        for j in range(len(df_k.columns)-1):
           generated_feature_list.append(feature_list[i] + str(j))
     return generated_feature_list
@@ -280,15 +285,15 @@ def read_vectors(df):
 def get_facet_explanation(sessionId,source,facet,article_no):
   facet, label = facet.split(' ')
   if('Whats' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.parquet.gzip')
   elif ('Wheres' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_wheres_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_wheres_k_x_means_labelled.parquet.gzip')
   elif ('Events' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_events_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_events_k_x_means_labelled.parquet.gzip')
   elif ('Whens' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whens_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whens_k_x_means_labelled.parquet.gzip')
   elif ('Whos' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whos_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whos_k_x_means_labelled.parquet.gzip')
   mask = (words_df['Article_no'] == int(article_no)) & (words_df['k_labels'] == int(label))
   all_events = np.unique(words_df.loc[mask].Events.values)
   words_df = words_df[words_df['k_labels'] == int(label)]
@@ -318,15 +323,15 @@ def get_most_similar_words(sessionId,source,facet,word):
   facet, label = facet.split(' ')
   all_words = []
   if('Whats' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.parquet.gzip')
   elif ('Wheres' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_wheres_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_wheres_k_x_means_labelled.parquet.gzip')
   elif ('Events' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_events_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_events_k_x_means_labelled.parquet.gzip')
   elif ('Whens' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whens_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whens_k_x_means_labelled.parquet.gzip')
   elif ('Whos' in facet):
-    words_df = pd.read_csv('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whos_k_x_means_labelled.csv')
+    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whos_k_x_means_labelled.parquet.gzip')
   vector = read_ind_vectors(words_df[words_df.Parent_Words==word].vectors.values[0])
   words_df = words_df[words_df['k_labels'] == int(label)]
   words_df_without_duplicates = words_df.drop_duplicates(subset=['Events'])
@@ -343,24 +348,24 @@ def reassign_words(sessionId,source,facet,word,new_cluster):
   facet, label = facet.split(' ')
   new_cluster, new_label = new_cluster.split(' ')
   if('Whats' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whats_k_x_means_labelled.csv'
+    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whats_k_x_means_labelled.parquet.gzip'
   elif ('Wheres' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_wheres_k_x_means_labelled.csv'
+    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_wheres_k_x_means_labelled.parquet.gzip'
   elif ('Events' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_events_k_x_means_labelled.csv'
+    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_events_k_x_means_labelled.parquet.gzip'
   elif ('Whens' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whens_k_x_means_labelled.csv'
+    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whens_k_x_means_labelled.parquet.gzip'
   elif ('Whos' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whos_k_x_means_labelled.csv'
-  words_df = pd.read_csv(filepath)
+    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whos_k_x_means_labelled.parquet.gzip'
+  words_df = pd.read_parquet(filepath)
   word_events = words_df.loc[words_df.Parent_Words==word, 'Events']
   words_df.loc[words_df.Events.isin(word_events), 'k_labels'] = int(new_label)
-  words_df.to_csv(filepath)
+  words_df.to_parquet(filepath,compression='gzip')
 
 
 def get_feature_vectors(data,label_feature,sessionId,source):
-  source_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + 'result.csv'
-  source_df = pd.read_csv(source_path)
+  source_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + 'result.parquet.gzip'
+  source_df = pd.read_parquet(source_path)
   all_feature_vec=[]
   if(label_feature=='k_means'):
     k = len(set(data.k_labels.values))
@@ -382,12 +387,12 @@ def get_all_feature_vectors(sessionId,source,feature_sizes_k):
   files_list = ['all_events_k_x_means_labelled','all_whats_k_x_means_labelled','all_whens_k_x_means_labelled','all_wheres_k_x_means_labelled','all_whos_k_x_means_labelled']
   output_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
   for i in range(5):
-    file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '.csv'
-    df = pd.read_csv(file_input)
+    file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '.parquet.gzip'
+    df = pd.read_parquet(file_input)
     k_vectors = get_feature_vectors(df,'k_means',sessionId,source)
     k_vector_df = pd.DataFrame(k_vectors)
-    output_file = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\' + output_list[i] + '_kmeans.csv'
-    k_vector_df.to_csv(output_file)
+    output_file = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\' + output_list[i] + '_kmeans.parquet.gzip'
+    k_vector_df.to_parquet(output_file,compression='gzip')
 
 def get_elbow_k(vectors,config):
   model = KMeans()
@@ -425,8 +430,24 @@ def get_book_level_clustering(k_final_vectors,importance,k):
   k_result = get_clustering_labels(k_final_vectors,importance,k)
   return k_result
 
-def calculate_weights(feature_sizes_k,global_weights,increase_local_weights=None,decrease_local_weights=None):
+def find_normalized_value(values):
+  min_value = np.min(values)
+  max_value = np.max(values)
+  normalized_value = (values - min_value) / (max_value - min_value)
+  return normalized_value
+
+def run_logistic_regression(x_train, y_train):
+  clf = LogisticRegression()
+  clf.fit(x_train, y_train)
+  values = clf.coef_[0]
+  normalized_value = find_normalized_value(values)
+  return normalized_value
+
+
+def calculate_weights(feature_sizes_k,x_train,y_train,global_weights,increase_local_weights=None,decrease_local_weights=None):
   features = ['Whats 0','Whens 0','Wheres 0','Whos 0']
+  if(x_train is not None):
+    similarity_weights = run_logistic_regression(x_train,y_train)
   all_weight = np.ones(len(feature_sizes_k))
   n = 0
   for i,weight in enumerate(global_weights):
@@ -443,30 +464,47 @@ def calculate_weights(feature_sizes_k,global_weights,increase_local_weights=None
       weight=5
     all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),weight)
     n = final_indices
+  #print(all_weight)
+  all_weight_set = set(all_weight)
+  global_value = all_weight
+  if(len(all_weight_set)!=1):
+    global_value = find_normalized_value(all_weight)
+  resultant_vector = similarity_weights + global_value / 2
   if increase_local_weights!=None:
     increase_weights = [feature_sizes_k.index(local_weight) for local_weight in increase_local_weights]
     for i in increase_weights:
-      all_weight[i] = all_weight[i] * (4)
+      resultant_vector[i] = resultant_vector[i] * (4)
   if decrease_local_weights!=None:
     decreased_weights = [feature_sizes_k.index(local_weight) for local_weight in decrease_local_weights]
     for i in decreased_weights:
-      all_weight[i] = all_weight[i] * (0.5)
+      resultant_vector[i] = resultant_vector[i] * (0.5)
   #print(all_weight)
-  return all_weight
+  return resultant_vector
 
-def get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights):
+def generate_training_data(data,relevance,not_relevance):
+  x_train = data[np.concatenate((relevance, not_relevance))]
+  y_train = np.concatenate((np.ones(len(relevance)), np.zeros(len(not_relevance))))
+  return x_train, y_train
+
+def get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights):
     files_list = ['all_events_feature_vector', 'all_whats_feature_vector', 'all_whens_feature_vector', 'all_wheres_feature_vector', 'all_whos_feature_vector']
-    base_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\{}_kmeans.csv'
-    dfs = [pd.read_csv(base_path.format(f)).drop(['Unnamed: 0'], axis=1) for f in files_list]
+    base_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\{}_kmeans.parquet.gzip'
+    dfs = [pd.read_parquet(base_path.format(f)).drop(['Unnamed: 0'], axis=1) for f in files_list]
     k_final_vectors = np.concatenate([df.values for df in dfs], axis=1)
-    importance = calculate_weights(feature_sizes_k,global_weights,increase_local_weights,decrease_local_weights)
+    x_train = None
+    y_train = None
+    if(len(relevant_docs)>0):
+      x_train, y_train = generate_training_data(k_final_vectors,relevant_docs,not_relevant_docs)
+    importance = calculate_weights(feature_sizes_k,x_train,y_train,global_weights,increase_local_weights)
     if importance is None:
         importance = np.ones(k_final_vectors.shape[1])
     return k_final_vectors,importance
 
+
+
 @app.get("/recluster_words/{sessionId}/{source}/{feature_sizes_k}/{relevant_docs}/{not_relevant_docs}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
 def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,increase_local_weights=None,decrease_local_weights=None,):
-  output_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.csv'
+  output_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
   feature_sizes_k = json.loads(feature_sizes_k)
   global_weights = json.loads(global_weights)
   relevant_docs = json.loads(relevant_docs)
@@ -474,7 +512,14 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
   increase_local_weights = json.loads(increase_local_weights) if increase_local_weights else None
   decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
   get_all_feature_vectors(sessionId,source,feature_sizes_k)
-  k_final_vectors,importance = get_final_vectors(sessionId,feature_sizes_k,global_weights,source,increase_local_weights,decrease_local_weights)
+  if(len(relevant_docs)>0):
+    result_df = pd.read_parquet(output_path,index_col=0)
+    all_docs = result_df[result_df.highlight==1].index
+    not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
+    #print(relevant_docs)
+    #print(all_docs)
+    #print(not_relevant_docs)
+  k_final_vectors,importance = get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights)
   if(source=='R2'):
     labels_df = get_book_level_clustering(k_final_vectors,importance,2)
   elif(source=='R5'):
@@ -483,11 +528,15 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
     labels_df = get_book_level_clustering(k_final_vectors,importance,11)
   tsne_df = pd.DataFrame(get_tsne(k_final_vectors,20),columns=['x_axis','y_axis'])
   result = pd.concat([pd.DataFrame(k_final_vectors),labels_df,tsne_df],axis=1)
-  result['relevance'] = np.zeros(len(result))
-  result.loc[relevant_docs, 'highlight'] = 1
-  result.loc[relevant_docs, 'relevance'] = 1
-  result.loc[not_relevant_docs, 'relevance'] = 0
-  #result['article_no'] = result.index
-  result.to_csv(output_path, index_label='article_no', header=True)
+  if(len(relevant_docs)>0):
+    result['relevance'] = np.zeros(len(result))
+    result.loc[relevant_docs, 'highlight'] = 1
+    result.loc[relevant_docs, 'relevance'] = 1
+    result.loc[not_relevant_docs, 'relevance'] = 0
+  else:
+    result['relevance'] = np.ones(len(result))
+    result['highlight'] = np.zeros(len(result))
+  result['article_no'] = result.index
+  result.to_parquet(output_path,compression='gzip')
   return {'message': 'Success'}
 

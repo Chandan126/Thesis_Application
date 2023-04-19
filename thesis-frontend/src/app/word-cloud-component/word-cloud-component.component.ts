@@ -46,11 +46,7 @@ export class WordCloudComponentComponent implements OnChanges {
         .style('fill', () => `rgb(${~~(Math.random() * 255)}, ${~~(Math.random() * 255)}, ${~~(Math.random() * 255)})`)
         .attr('text-anchor', 'middle')
         .attr('transform', d => `translate(${[d.x, d.y]})rotate(${d.rotate})`)
-        .text(d => d.text)
-        .on('click', d => {
-            console.log(`Clicked on word "${d.target.textContent}"`);
-            this.ngZone.run(() => this.wordClicked.emit(d.target.textContent));
-        });
+        .text(d => d.text);
   }
 
   clearWordCloud() {

@@ -1,8 +1,7 @@
 import { Component,ChangeDetectorRef, OnInit } from '@angular/core';
 import { DataServiceService } from '../data-service.service';
-import { LandingPopupComponent } from '../landing-popup/landing-popup.component';
+import {Router} from '@angular/router'
 import { NgxSpinnerService } from 'ngx-spinner';
-import { MatDialog } from '@angular/material/dialog';
 import { zip } from 'rxjs';
 
 @Component({
@@ -24,7 +23,7 @@ export class HomeComponentComponent implements OnInit {
   article2: any;
   articleFeatureDiv: any;
   query: any;
-  featureWeight: any[] = [1,1,1,1,1];
+  featureWeight: any[] = [2,2,2,2,2];
   isArticleExplanation = false;
   interestingClusters:any[] = [];
   notInterestingClusters:any[] = [];
@@ -34,21 +33,20 @@ export class HomeComponentComponent implements OnInit {
 
   constructor(private dataService: DataServiceService,
     private changeDetectorRef: ChangeDetectorRef,
-    private spinner: NgxSpinnerService,private dialog: MatDialog
+    private spinner: NgxSpinnerService,private router: Router
     ) {}
 
   ngOnInit() {
-    /*const sessionId = this.dataService.getSessionId();
-    if(sessionId){
-      this.getDataSourceFromAPI();
-    }
-    else{
-      const dialogRef = this.dialog.open(LandingPopupComponent, {
-        width: '250px',
-        disableClose: true // add this to prevent closing the popup with ESC or clicking outside of it
-      });
-    }*/
-    this.getDataSourceFromAPI();
+    setTimeout(() => {
+      // Code to execute after 5 seconds
+      const sessionId = this.dataService.getSessionId();
+      if(sessionId){
+        this.getDataSourceFromAPI();
+      }
+      else{
+        this.router.navigateByUrl('/login');
+      }
+    }, 5000);
   }
 
 
@@ -110,7 +108,7 @@ export class HomeComponentComponent implements OnInit {
 
   recluster(){
     const result = this.dataService.getUserFeedbacks();
-    this.query = '';
+    //this.query = '';
     console.log(result);
     this.spinner.show();
     this.configuration = undefined;

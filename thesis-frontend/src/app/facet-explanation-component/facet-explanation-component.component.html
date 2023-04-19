@@ -28,12 +28,6 @@
             </div>
                 <app-article-explanation [clickedPoint]="data.selected_article" [data]="data.data" [articleFeatureDiv]="data.articleFeatureDiv" (barClicked)="onBarClicked($event)" ></app-article-explanation>
         </div>
-        <div  *ngIf="isWordClick">
-            <div class="tile-header">
-                <h3>Want to reassign the words?</h3>
-            </div>
-                <app-word-reassign-component [clickedWord]="clickedWord" [source]="data.source" [articleFeatureDiv]="data.articleFeatureDiv" [clickedBar]="clickedBar" ></app-word-reassign-component>
-        </div>  
     </mat-grid-tile>
   </mat-grid-list>
 </mat-dialog-content>

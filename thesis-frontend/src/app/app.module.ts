@@ -17,7 +17,6 @@ import { HomeComponentComponent } from './home-component/home-component.componen
 import { FacetExplanationComponentComponent } from './facet-explanation-component/facet-explanation-component.component';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { WordCloudComponentComponent } from './word-cloud-component/word-cloud-component.component';
-import { WordReassignComponentComponent } from './word-reassign-component/word-reassign-component.component';
 import { FeatureWeightingComponentComponent } from './feature-weighting-component/feature-weighting-component.component';
 import { LandingPopupComponent } from './landing-popup/landing-popup.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -35,7 +34,6 @@ import {  MatCardModule } from '@angular/material/card';
     HomeComponentComponent,
     FacetExplanationComponentComponent,
     WordCloudComponentComponent,
-    WordReassignComponentComponent,
     FeatureWeightingComponentComponent,
     LandingPopupComponent
   ],
