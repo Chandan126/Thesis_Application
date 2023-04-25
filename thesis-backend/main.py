@@ -159,18 +159,23 @@ def get_global_explanations(clusters,result_df,input_path,data_path):
       clusterData['Cluster '+str(k)][facets[i]] = result_words
   return clusterData
 
-@app.get("/global_explanations/{sessionId}/{source}")
-def fetch_global_explanations(sessionId,source):
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
-    input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
-    data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip' 
-    result_df = pd.read_parquet(path)
-    if(source=='R2'):
-        clusterData = get_global_explanations(2,result_df,input_path,data_path)
-    elif(source=='R5'):
-        clusterData = get_global_explanations(5,result_df,input_path,data_path)
-    elif(source=='TREC'):
-        clusterData = get_global_explanations(11,result_df,input_path,data_path)
+@app.get("/global_explanations/{sessionId}/{source}/{system}")
+def fetch_global_explanations(sessionId,source,system):
+    if(system=='A'):
+      path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
+      input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
+      data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip' 
+      result_df = pd.read_parquet(path)
+      if(source=='R2'):
+          clusterData = get_global_explanations(2,result_df,input_path,data_path)
+      elif(source=='R5'):
+          clusterData = get_global_explanations(5,result_df,input_path,data_path)
+      elif(source=='TREC'):
+          clusterData = get_global_explanations(11,result_df,input_path,data_path)
+    else:
+      path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\explanations.json'
+      with open(path, 'r') as f:
+        clusterData = json.load(f)
     return clusterData
     
 @app.get("/get_articles/{sessionId}/{source}/{selectedClusterNumber}")
@@ -284,6 +289,7 @@ def read_vectors(df):
 @app.get("/get_facet_explanation/{sessionId}/{source}/{facet}/{article_no}")
 def get_facet_explanation(sessionId,source,facet,article_no):
   facet, label = facet.split(' ')
+  label = 4
   if('Whats' in facet):
     words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.parquet.gzip')
   elif ('Wheres' in facet):

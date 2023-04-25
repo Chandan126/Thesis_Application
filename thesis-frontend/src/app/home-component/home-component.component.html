@@ -21,9 +21,14 @@
       <button mat-button class="configuration-button" (click)="handleButtonClick('explanation')">Explanation</button>
       <button mat-button class="configuration-button" (click)="handleButtonClick('user_feedback')">User Feedback</button>
       <div *ngIf="this.configuration=='explanation'">
-        <select class="explanation-button" [(ngModel)]="selectedExplanationType">
-          <option value="global">Global Explanation</option>
+        <select class="explanation-button" [(ngModel)]="systemOption" (change)="getGlobalExplanation()">
+          <option>Select System</option>
+          <option value="A">System A</option>
+          <option value="B">System B</option>
+        </select>
+        <select class="explanation-button" [(ngModel)]="selectedExplanationType" (change)="getGlobalExplanation()">
           <option value="local">Local Explanation</option>
+          <option value="global">Global Explanation</option>
         </select>
         <br><br>
         <div *ngIf="selectedExplanationType==='global'; else localExplanation">
@@ -34,6 +39,9 @@
                 {{ clusterNumber }}
               </option>
             </select>
+          </div>
+          <div class="spinner-container" *ngIf="loadingGlobalExplanations">
+            <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
           </div>
           <app-global-explanations [clusterNumber]="selectedGlobalCluster" [globalExplanations]="globalExplanations"></app-global-explanations>
         </div>

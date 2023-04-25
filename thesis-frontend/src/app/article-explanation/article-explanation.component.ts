@@ -55,7 +55,7 @@ export class ArticleExplanationComponent {
   ngOnChanges(): void {
     const requiredData = this.data.filter(d=>d.article_no===this.clickedPoint);
     if (this.data) {
-      this.chartData.datasets = [{data: Object.values(Object.assign({}, ...requiredData)).slice(0,requiredData.length - 9),
+      this.chartData.datasets = [{data: Object.values(Object.assign({}, ...requiredData)).slice(0,requiredData.length - 8),
         borderWidth: 1,
         label: 'Article Explanation ' + this.clickedPoint,
         barPercentage: 0.5,

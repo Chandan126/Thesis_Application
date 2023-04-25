@@ -14,7 +14,7 @@
     font-weight: bold;
     position: relative;
     padding: 20px;
-    background-color: #e3071a;
+    background-color: grey;
     color:#fff;
 }
 
@@ -29,7 +29,7 @@ input[type="text"] {
   }
 
 .datasource-dropdown{
-    background-color: #4CAF50;
+    background-color: darksalmon;
     color: white;
     font-weight: bold;
     padding: 19px;
@@ -56,11 +56,11 @@ input[type="text"] {
     cursor: pointer;
     font-weight: bold;
     display: block;
-    background-color: #4CAF50;
+    background-color: grey;
 }
 
 .configuration-button{
-    background-color: #4CAF50;
+    background-color: darksalmon;
     width: 50%;
     color: white;
     border: none;
@@ -70,7 +70,7 @@ input[type="text"] {
 }
 
 .recluster-button{
-    background-color: #4CAF50;
+    background-color: darksalmon;
     color: white;
     left: 180px;
     width: 20%;
@@ -82,7 +82,7 @@ input[type="text"] {
 }
 
 .search-button{
-    background-color: #4CAF50;
+    background-color: darksalmon;
     color: white;
     left: 30px;
     position: relative;
@@ -98,9 +98,17 @@ input[type="text"] {
     grid-template-rows: auto;
 }
 
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+
 .global-explanation-label{
     padding: 20px;
-    background: #e3071a;
+    background: darksalmon;
     color: white;
     font-weight: bold;
     grid-column: 1 / 2;
@@ -111,7 +119,7 @@ input[type="text"] {
     padding: 20px;
     color: white;
     cursor: pointer;
-    background-color: #4CAF50;
+    background-color: grey;
     border: none;
     grid-column: 2 / 2;
     grid-row: 1 / 2;

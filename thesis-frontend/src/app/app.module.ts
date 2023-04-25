@@ -21,6 +21,7 @@ import { FeatureWeightingComponentComponent } from './feature-weighting-componen
 import { LandingPopupComponent } from './landing-popup/landing-popup.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {  MatCardModule } from '@angular/material/card';
 
 @NgModule({
@@ -49,7 +50,8 @@ import {  MatCardModule } from '@angular/material/card';
     NgxSpinnerModule,
     BrowserAnimationsModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    MatProgressSpinnerModule
   ],
   providers: [],
   entryComponents: [AppComponent,LandingPopupComponent,ScatterComponentComponent,FacetExplanationComponentComponent],

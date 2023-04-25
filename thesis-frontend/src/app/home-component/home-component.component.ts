@@ -10,18 +10,22 @@ import { zip } from 'rxjs';
   styleUrls: ['./home-component.component.css']
 })
 export class HomeComponentComponent implements OnInit {
-  dataSources: any = [];
+  dataSources: any;
+  systemOption: any = 'Select System';
   source: any;
   labels: any;
   clusterNumbers: any = [];
   data: any;
   globalExplanations: any;
-  selectedExplanationType: string = 'global';
+  globalExplanationsA: any;
+  globalExplanationsB: any;
+  selectedExplanationType: string = 'local';
   articles: any;
   selectedGlobalCluster: any;
   article1: any;
   article2: any;
   articleFeatureDiv: any;
+  loadingGlobalExplanations: boolean = false;
   query: any;
   featureWeight: any[] = [2,2,2,2,2];
   isArticleExplanation = false;
@@ -46,9 +50,8 @@ export class HomeComponentComponent implements OnInit {
       else{
         this.router.navigateByUrl('/login');
       }
-    }, 5000);
+    }, 1000);
   }
-
 
   getDataSourceFromAPI() {
     this.dataService.getSourceData().subscribe(data => {
@@ -62,17 +65,45 @@ export class HomeComponentComponent implements OnInit {
     zip(
       this.dataService.getDataLabels(this.source),
       this.dataService.getData(this.source,query),
-      this.dataService.getGlobalExplanations(this.source),
+      //this.dataService.getGlobalExplanations(this.source),
       this.dataService.getFeatureDivision(this.source)
-    ).subscribe(([response1, response2, response3, response4]) => {
+    ).subscribe(([response1, response2, response3]) => {
       this.labels = response1;
       this.clusterNumbers = Array.from({length: this.labels}, (_, i) => `Cluster ${i}`);
       this.data = response2;
-      this.globalExplanations = response3;
-      this.articleFeatureDiv = response4;
+      //this.globalExplanations = response3;
+      this.articleFeatureDiv = response3;
       this.spinner.hide();
     });
   }
+
+  getGlobalExplanation(){
+    if(this.selectedExplanationType=='global' && this.systemOption!='Select System'){
+      if(this.globalExplanations && this.globalExplanationsA && this.systemOption=='A'){
+        this.globalExplanations = this.globalExplanationsA;
+        return;
+      }
+      else if(this.globalExplanations && this.globalExplanationsB && this.systemOption=='B'){
+        this.globalExplanations = this.globalExplanationsB;
+        return;
+      }
+      console.log('Global Explanation on the way');
+      this.loadingGlobalExplanations = true;
+      this.dataService.getGlobalExplanations(this.source,this.systemOption)
+      .subscribe(response => {
+        //console.log(response);
+        this.globalExplanations = response;
+        this.loadingGlobalExplanations = false;
+        if(this.systemOption=='A'){
+          this.globalExplanationsA = response;
+        }
+        else if(this.systemOption=='B'){
+          this.globalExplanationsB = response;
+        }
+      });
+    }
+  }
+
 
   selectedClusterNumberChange(){
     this.dataService.getArticlesForCluster(this.source,this.selectedGlobalCluster)
@@ -109,6 +140,8 @@ export class HomeComponentComponent implements OnInit {
   recluster(){
     const result = this.dataService.getUserFeedbacks();
     //this.query = '';
+    this.globalExplanationsA = undefined;
+    this.globalExplanationsB = undefined;
     console.log(result);
     this.spinner.show();
     this.configuration = undefined;

@@ -60,8 +60,8 @@ export class DataServiceService {
     return this.http.get(`http://127.0.0.1:8000/labels/${source}`);
   }
 
-  getGlobalExplanations(source: string){
-    return this.http.get(`http://127.0.0.1:8000/global_explanations/${this.sessionId.sessionId}/${source}`);
+  getGlobalExplanations(source: string,system: string){
+    return this.http.get(`http://127.0.0.1:8000/global_explanations/${this.sessionId.sessionId}/${source}/${system}`);
   }
 
   getArticlesForCluster(source: string,selectedClusterNumber: string){
