@@ -1,0 +1,16 @@
+name: chandan-server
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - python=3.9.12
+  - fastapi
+  - joblib
+  - numpy
+  - pandas
+  - scikit-learn
+  - scipy
+  - yellowbrick
+  - uvicorn
+  - pyarrow
