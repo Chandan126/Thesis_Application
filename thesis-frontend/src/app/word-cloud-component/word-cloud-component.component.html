@@ -1,10 +1,13 @@
-<svg width="100%" height="100%"></svg>
-<div>
-    <mat-dialog-content>
-        Did you find this intersting?
-      </mat-dialog-content>
-      <mat-dialog-actions>
-        <button mat-button (click)="onConfirmClick('yes',clickedBar)">Yes</button>
-        <button mat-button (click)="onConfirmClick('no',clickedBar)">No</button>
-      </mat-dialog-actions>
+<div class="container">
+  <!-- <div id="grid-container"></div> -->
+
+  <img [src]="'data:image/png;base64,' + base64_img" alt="Word Cloud" [width]="300" [height]="300">
+
+  <mat-dialog-content>
+    Did you find this intersting?
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-button (click)="onConfirmClick('yes',clickedBar)">Yes</button>
+    <button mat-button (click)="onConfirmClick('no',clickedBar)">No</button>
+  </mat-dialog-actions>
 </div>

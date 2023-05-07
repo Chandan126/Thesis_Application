@@ -1,7 +1,6 @@
 import { Component, Inject, OnInit, NgZone, Output, EventEmitter } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {DataServiceService} from '../data-service.service';
-import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-facet-explanation-component',
@@ -42,6 +41,10 @@ export class FacetExplanationComponentComponent implements OnInit{
 
   onNotRelevanceClick(){
     this.dataService.storeDocsFeedback(this.data.selected_article, false);
+  }
+
+  close() {
+    this.dialogRef.close();
   }
 
 }

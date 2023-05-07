@@ -1,36 +1,53 @@
-<h2 mat-dialog-title>Article Explanation</h2>
-<mat-dialog-content>
-  <mat-grid-list cols="2" gutterSize="10px">
-    <mat-grid-tile>
-        <div *ngIf="isContent">
-            <div class="tile-header">
-                <h3>{{content['article_title']}}</h3>
-            </div>
-                <div>{{content['article_data']}}</div>
-                <div>
-                <br><br>
-                <label> Is this document relevant?  </label>   
-                <button (click)="onRelevanceClick()">Yes</button>
-                <button (click)="onNotRelevanceClick()">No</button>
-                </div>
-            </div>
-        <div  *ngIf="!isContent">
-            <div class="tile-header">
-                <h3>{{clickedBar}}</h3>
-            </div>
-            <app-word-cloud-component [clickedBar]="clickedBar" [article]="data.selected_article" [source]="data.source" (wordClicked)="onWordClicked($event)"></app-word-cloud-component>
-        </div>
+<h1 mat-dialog-title style="text-align: center;font-size: xx-large;font-weight: bold;">Article Explanation</h1>
+<mat-grid-list cols="18" rowHeight="1:7">
+    <mat-grid-tile [colspan]="9">
+            <mat-card *ngIf="isContent" class="my-article-card" style="border: 1px solid #000;margin:10px;">
+                <mat-card-header>
+                    <mat-card-title>
+                        <h3>{{content['article_title']}}</h3>
+                    </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <div>{{content['article_data']}}</div>
+                    <div>
+                        <br><br>
+                        <label> Is this document relevant? </label>
+                        <button (click)="onRelevanceClick()">Yes</button>
+                        <button (click)="onNotRelevanceClick()">No</button>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+            <mat-card *ngIf="!isContent" class="my-article-card" style="border: 1px solid #000;margin:10px;">
+                <mat-card-header>
+                    <mat-card-title>
+                        <h3>{{clickedBar}}</h3>
+                    </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <app-word-cloud-component [clickedBar]="clickedBar"
+                        [article]="data.selected_article" [source]="data.source"
+                        (wordClicked)="onWordClicked($event)"></app-word-cloud-component>
+                </mat-card-content>
+            </mat-card>
     </mat-grid-tile>
-    <mat-grid-tile>
-        <div  *ngIf="!isWordClick">
-            <div class="tile-header">
-                <h3>Article Vector Representation</h3>
-            </div>
-                <app-article-explanation [clickedPoint]="data.selected_article" [data]="data.data" [articleFeatureDiv]="data.articleFeatureDiv" (barClicked)="onBarClicked($event)" ></app-article-explanation>
-        </div>
+    <mat-grid-tile [colspan]="9">
+            <mat-card class="my-article-card" style="border: 1px solid #000;margin:10px;">
+                <mat-card-header>
+                    <mat-card-title>
+                        <h3>Article Vector Representation</h3>
+                    </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <app-article-explanation
+                        [clickedPoint]="data.selected_article"
+                        [data]="data.data"
+                        [articleFeatureDiv]="data.articleFeatureDiv"
+                        (barClicked)="onBarClicked($event)"></app-article-explanation>
+                </mat-card-content>
+            </mat-card>
     </mat-grid-tile>
-  </mat-grid-list>
-</mat-dialog-content>
-<mat-dialog-actions>
-  <button mat-button mat-dialog-close>Close</button>
+</mat-grid-list>
+
+<mat-dialog-actions style="justify-content: end;">
+    <button style="font-size: x-large;" class="mat-raised-button"(click)="close()">Close</button>
 </mat-dialog-actions>
