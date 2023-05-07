@@ -1,0 +1,14 @@
+version: '3'
+services:
+    frontend:
+        image: chan-ang
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        ports: 
+            - "4200:4200"
+        volumes:
+            - "./:/angular"
+            - "ang_node_vol:/angular/node_modules"
+volumes:
+  ang_node_vol:
