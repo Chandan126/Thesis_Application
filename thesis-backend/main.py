@@ -19,6 +19,10 @@ import ast
 import shutil
 import json
 import math
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import base64
+import io
 
 app = FastAPI()
 
@@ -30,10 +34,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-R2_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R2'
-R5_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\R5'
-Trec_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\TREC'
-parent_dir = 'C:\\Studies\\Thesis_Application\\thesis-backend'
+# Update the paths accordingly
+backend_path = '/home/srinath/Documents/tmp/chandan_tmp/'
+R2_path = '/home/srinath/Documents/tmp/chandan_tmp/R2'
+R5_path = '/home/srinath/Documents/tmp/chandan_tmp/R5'
+Trec_path = '/home/srinath/Documents/tmp/chandan_tmp/TREC'
+parent_dir = '/home/srinath/Documents/tmp/chandan_tmp'
 sources = ['R2','R5','TREC']
 @app.get("/session")
 def create_session():
@@ -56,8 +62,8 @@ def read_sources():
     return ['R2','R5','TREC']
 
 def search(sessionId,source,query):
-  vectorizer_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\vectorizer.pkl'
-  tfidf_matrix_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\tfidf_matrix.pkl'
+  vectorizer_path = backend_path + sessionId + '/' + source + '/vectorizer.pkl'
+  tfidf_matrix_path = backend_path + sessionId + '/' + source + '/tfidf_matrix.pkl'
   vectorizer = joblib.load(vectorizer_path)
   tfidf_matrix = joblib.load(tfidf_matrix_path)
   query_tfidf = vectorizer.transform([query])
@@ -69,7 +75,7 @@ def search(sessionId,source,query):
 
 @app.get("/sources/{sessionId}/{source}/{query}")
 def read_book_level_scatter(sessionId,source,query):
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
+    path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
     #print(query)
     result_df = pd.read_parquet(path)
     if(query!='undefined'):
@@ -162,9 +168,9 @@ def get_global_explanations(clusters,result_df,input_path,data_path):
 @app.get("/global_explanations/{sessionId}/{source}/{system}")
 def fetch_global_explanations(sessionId,source,system):
     if(system=='A'):
-      path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
-      input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
-      data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip' 
+      path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
+      input_path = backend_path + sessionId + '/' + source + '/'
+      data_path = backend_path + sessionId + '/' + source + '/data.parquet.gzip' 
       result_df = pd.read_parquet(path)
       if(source=='R2'):
           clusterData = get_global_explanations(2,result_df,input_path,data_path)
@@ -173,7 +179,7 @@ def fetch_global_explanations(sessionId,source,system):
       elif(source=='TREC'):
           clusterData = get_global_explanations(11,result_df,input_path,data_path)
     else:
-      path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\explanations.json'
+      path = backend_path + sessionId + '/' + source + '/explanations.json'
       with open(path, 'r') as f:
         clusterData = json.load(f)
     return clusterData
@@ -181,7 +187,7 @@ def fetch_global_explanations(sessionId,source,system):
 @app.get("/get_articles/{sessionId}/{source}/{selectedClusterNumber}")
 def fetch_articles(sessionId,source,selectedClusterNumber):
     clusterNum = int(selectedClusterNumber.split(" ")[1])
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
+    path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
     result_df = pd.read_parquet(path)
     articles = [f"Article {x}" for x in result_df[result_df.k_labels==clusterNum].index.values]
     return articles
@@ -221,14 +227,14 @@ def get_important_words(article1,article2,input_path,data_path):
 def fetch_local_explanations(sessionId,source,article1,article2):
   article1 = int(article1.split(" ")[1])
   article2 = int(article2.split(" ")[1])
-  data_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip' 
-  input_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\'
+  data_path = backend_path + sessionId + '/' + source + '/data.parquet.gzip' 
+  input_path = backend_path + sessionId + '/' + source + '/'
   article1_words,article2_words = get_important_words(article1,article2,input_path,data_path)
   return {'article_1':article1_words,'article_2':article2_words}
 
 @app.get("/get_article_content/{sessionId}/{source}/{article}")
 def fetch_local_explanations(sessionId,source,article):
-    path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\data.parquet.gzip'
+    path = backend_path + sessionId + '/' + source + '/data.parquet.gzip'
     data_df = pd.read_parquet(path)
     article_data = data_df.iloc[int(article)].content
     article_title = data_df.iloc[int(article)].title
@@ -240,7 +246,7 @@ def fetch_article_div(sessionId,source):
     files_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
     generated_feature_list = []
     for i in range(5):
-       path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '_kmeans.parquet.gzip'
+       path = backend_path + sessionId + '/' + source + '/' + files_list[i] + '_kmeans.parquet.gzip'
        df_k = pd.read_parquet(path)
        for j in range(len(df_k.columns)-1):
           generated_feature_list.append(feature_list[i] + str(j))
@@ -291,15 +297,15 @@ def get_facet_explanation(sessionId,source,facet,article_no):
   facet, label = facet.split(' ')
   label = 4
   if('Whats' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
   elif ('Wheres' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_wheres_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_wheres_k_x_means_labelled.parquet.gzip')
   elif ('Events' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_events_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_events_k_x_means_labelled.parquet.gzip')
   elif ('Whens' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whens_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whens_k_x_means_labelled.parquet.gzip')
   elif ('Whos' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whos_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whos_k_x_means_labelled.parquet.gzip')
   mask = (words_df['Article_no'] == int(article_no)) & (words_df['k_labels'] == int(label))
   all_events = np.unique(words_df.loc[mask].Events.values)
   words_df = words_df[words_df['k_labels'] == int(label)]
@@ -319,9 +325,27 @@ def get_facet_explanation(sessionId,source,facet,article_no):
     all_words.append(word)
     all_words.extend(parent_names)
   data = []
+  
+  # check if the word cloud is empty
+  if len(all_words) == 0:
+    # Generate the word cloud
+    wordcloud = WordCloud(width=800, height=800, background_color='white').generate(' '.join(['Empty Words']))
+  else :
+    # Generate the word cloud
+    wordcloud = WordCloud(width=800, height=800, background_color='white').generate(' '.join(all_words))
+
+  # Save the word cloud to a buffer
+  buf = io.BytesIO()
+  wordcloud.to_image().save(buf, format='PNG')
+
+  # Encode the image as a base64 string
+  img_str = base64.b64encode(buf.getvalue()).decode()
+
   for word in all_words:
      data.append({'text':word})
-  return {'facet_words' : data}
+  
+  api_response = {'word_cloud': img_str, 'facet_words': data}
+  return api_response
 
 
 @app.get("/get_similar_words/{sessionId}/{source}/{facet}/{word}")
@@ -329,15 +353,15 @@ def get_most_similar_words(sessionId,source,facet,word):
   facet, label = facet.split(' ')
   all_words = []
   if('Whats' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\all_whats_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
   elif ('Wheres' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_wheres_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_wheres_k_x_means_labelled.parquet.gzip')
   elif ('Events' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_events_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_events_k_x_means_labelled.parquet.gzip')
   elif ('Whens' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whens_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whens_k_x_means_labelled.parquet.gzip')
   elif ('Whos' in facet):
-    words_df = pd.read_parquet('C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\all_whos_k_x_means_labelled.parquet.gzip')
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whos_k_x_means_labelled.parquet.gzip')
   vector = read_ind_vectors(words_df[words_df.Parent_Words==word].vectors.values[0])
   words_df = words_df[words_df['k_labels'] == int(label)]
   words_df_without_duplicates = words_df.drop_duplicates(subset=['Events'])
@@ -354,15 +378,15 @@ def reassign_words(sessionId,source,facet,word,new_cluster):
   facet, label = facet.split(' ')
   new_cluster, new_label = new_cluster.split(' ')
   if('Whats' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whats_k_x_means_labelled.parquet.gzip'
+    filepath = backend_path+ sessionId + '/'+source+'/all_whats_k_x_means_labelled.parquet.gzip'
   elif ('Wheres' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_wheres_k_x_means_labelled.parquet.gzip'
+    filepath = backend_path+ sessionId + '/'+source+'/all_wheres_k_x_means_labelled.parquet.gzip'
   elif ('Events' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_events_k_x_means_labelled.parquet.gzip'
+    filepath = backend_path+ sessionId + '/'+source+'/all_events_k_x_means_labelled.parquet.gzip'
   elif ('Whens' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whens_k_x_means_labelled.parquet.gzip'
+    filepath = backend_path+ sessionId + '/'+source+'/all_whens_k_x_means_labelled.parquet.gzip'
   elif ('Whos' in facet):
-    filepath = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\'+source+'\\all_whos_k_x_means_labelled.parquet.gzip'
+    filepath = backend_path+ sessionId + '/'+source+'/all_whos_k_x_means_labelled.parquet.gzip'
   words_df = pd.read_parquet(filepath)
   word_events = words_df.loc[words_df.Parent_Words==word, 'Events']
   words_df.loc[words_df.Events.isin(word_events), 'k_labels'] = int(new_label)
@@ -370,7 +394,7 @@ def reassign_words(sessionId,source,facet,word,new_cluster):
 
 
 def get_feature_vectors(data,label_feature,sessionId,source):
-  source_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + 'result.parquet.gzip'
+  source_path = backend_path + sessionId + '/' + source + '/' + 'result.parquet.gzip'
   source_df = pd.read_parquet(source_path)
   all_feature_vec=[]
   if(label_feature=='k_means'):
@@ -393,11 +417,11 @@ def get_all_feature_vectors(sessionId,source,feature_sizes_k):
   files_list = ['all_events_k_x_means_labelled','all_whats_k_x_means_labelled','all_whens_k_x_means_labelled','all_wheres_k_x_means_labelled','all_whos_k_x_means_labelled']
   output_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
   for i in range(5):
-    file_input = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\' + files_list[i] + '.parquet.gzip'
+    file_input = backend_path + sessionId + '/' + source + '/' + files_list[i] + '.parquet.gzip'
     df = pd.read_parquet(file_input)
     k_vectors = get_feature_vectors(df,'k_means',sessionId,source)
     k_vector_df = pd.DataFrame(k_vectors)
-    output_file = 'C:\\Studies\\Thesis_Application\\thesis-backend\\'+ sessionId + '\\' + source + '\\' + output_list[i] + '_kmeans.parquet.gzip'
+    output_file = backend_path+ sessionId + '/' + source + '/' + output_list[i] + '_kmeans.parquet.gzip'
     k_vector_df.to_parquet(output_file,compression='gzip')
 
 def get_elbow_k(vectors,config):
@@ -494,7 +518,7 @@ def generate_training_data(data,relevance,not_relevance):
 
 def get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights):
     files_list = ['all_events_feature_vector', 'all_whats_feature_vector', 'all_whens_feature_vector', 'all_wheres_feature_vector', 'all_whos_feature_vector']
-    base_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\{}_kmeans.parquet.gzip'
+    base_path = backend_path + sessionId + '/' + source + '/{}_kmeans.parquet.gzip'
     dfs = [pd.read_parquet(base_path.format(f)).drop(['Unnamed: 0'], axis=1) for f in files_list]
     k_final_vectors = np.concatenate([df.values for df in dfs], axis=1)
     x_train = None
@@ -510,7 +534,7 @@ def get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,
 
 @app.get("/recluster_words/{sessionId}/{source}/{feature_sizes_k}/{relevant_docs}/{not_relevant_docs}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
 def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,increase_local_weights=None,decrease_local_weights=None,):
-  output_path = 'C:\\Studies\\Thesis_Application\\thesis-backend\\' + sessionId + '\\' + source + '\\result.parquet.gzip'
+  output_path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
   feature_sizes_k = json.loads(feature_sizes_k)
   global_weights = json.loads(global_weights)
   relevant_docs = json.loads(relevant_docs)

@@ -14,3 +14,4 @@ dependencies:
   - yellowbrick
   - uvicorn
   - pyarrow
+  - wordcloud
