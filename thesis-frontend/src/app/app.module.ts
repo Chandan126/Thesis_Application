@@ -1,9 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MaterialModule } from './material.module';
 import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { MatDialogModule } from '@angular/material/dialog';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import {NgChartsModule} from 'ng2-charts';
 import { NgxSpinnerModule } from 'ngx-spinner';
@@ -15,14 +16,9 @@ import { HighlightWordsPipe } from './highlight-words.pipe';
 import { ArticleExplanationComponent } from './article-explanation/article-explanation.component';
 import { HomeComponentComponent } from './home-component/home-component.component';
 import { FacetExplanationComponentComponent } from './facet-explanation-component/facet-explanation-component.component';
-import { MatGridListModule } from '@angular/material/grid-list';
 import { WordCloudComponentComponent } from './word-cloud-component/word-cloud-component.component';
 import { FeatureWeightingComponentComponent } from './feature-weighting-component/feature-weighting-component.component';
 import { LandingPopupComponent } from './landing-popup/landing-popup.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {  MatCardModule } from '@angular/material/card';
 
 @NgModule({
   declarations: [
@@ -40,19 +36,14 @@ import {  MatCardModule } from '@angular/material/card';
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
+    MaterialModule,
     FormsModule,
     HttpClientModule,
     NgChartsModule,
-    MatDialogModule,
-    MatGridListModule,
     NgxSliderModule,
-    NgxSpinnerModule,
-    BrowserAnimationsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatProgressSpinnerModule
-  ],
+    NgxSpinnerModule  ],
   providers: [],
   entryComponents: [AppComponent,LandingPopupComponent,ScatterComponentComponent,FacetExplanationComponentComponent],
   bootstrap: [AppComponent]
