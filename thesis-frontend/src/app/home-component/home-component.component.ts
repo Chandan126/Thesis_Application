@@ -34,6 +34,8 @@ export class HomeComponentComponent implements OnInit {
   configuration: string | undefined;
   clickedPoint: any;
   localExplanations: any;
+  explanation_dd: boolean = false;
+  user_feedback_dd: boolean = false;
 
   constructor(private dataService: DataServiceService,
     private changeDetectorRef: ChangeDetectorRef,
@@ -122,8 +124,14 @@ export class HomeComponentComponent implements OnInit {
     this.changeDetectorRef.detectChanges();
   }
 
-  handleButtonClick(input: string){
-    this.configuration = input
+  handleExpButtonClick(){
+    this.explanation_dd = !this.explanation_dd;
+    this.user_feedback_dd = false
+  }
+
+  handleUserFeedButtonClick(){
+    this.user_feedback_dd = !this.user_feedback_dd;
+    this.explanation_dd = false
   }
 
   search(){

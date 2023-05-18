@@ -21,9 +21,9 @@
     
 
     <div class = 'explanation-dropdown'>
-      <button mat-button class="configuration-button" (click)="handleButtonClick('explanation')">Explanation</button>
-      <button mat-button class="configuration-button" (click)="handleButtonClick('user_feedback')">User Feedback</button>
-      <div *ngIf="this.configuration=='explanation'">
+      <button mat-button class="configuration-button" (click)="handleExpButtonClick()">Explanation</button>
+      <button mat-button class="configuration-button" (click)="handleUserFeedButtonClick()">User Feedback</button>
+      <div *ngIf="explanation_dd">
         <select class="explanation-button" [(ngModel)]="systemOption" (change)="getGlobalExplanation()">
           <option>Select System</option>
           <option value="A">System A</option>
@@ -75,7 +75,7 @@
           </div>
         </ng-template>
       </div>
-      <div *ngIf="this.configuration=='user_feedback'">
+      <div *ngIf="user_feedback_dd">
         <app-feature-weighting-component (rewighCluster)="onFeatureReweighting($event)"></app-feature-weighting-component>
       </div>
     </div>
