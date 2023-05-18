@@ -17,6 +17,10 @@ export class FacetExplanationComponentComponent implements OnInit{
   //@Output() public clusterFeedback: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,private dataService: DataServiceService, private dialogRef: MatDialogRef<FacetExplanationComponentComponent>, private ngZone: NgZone) { 
+    this.content = {
+      'article_title': null,
+      'article_data': null
+    }
   }
 
   ngOnInit(): void {

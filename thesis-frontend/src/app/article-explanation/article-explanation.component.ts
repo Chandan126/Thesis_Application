@@ -65,6 +65,6 @@ export class ArticleExplanationComponent {
       }];
       this.chartData.labels = this.articleFeatureDiv;
     }
-    this.chart.chart?.update();
+    // this.chart.chart?.update();
   }
 }

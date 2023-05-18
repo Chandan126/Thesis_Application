@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialModule } from './material.module';
@@ -19,6 +20,12 @@ import { FacetExplanationComponentComponent } from './facet-explanation-componen
 import { WordCloudComponentComponent } from './word-cloud-component/word-cloud-component.component';
 import { FeatureWeightingComponentComponent } from './feature-weighting-component/feature-weighting-component.component';
 import { LandingPopupComponent } from './landing-popup/landing-popup.component';
+import { PlotlyComponentComponent } from './plotly-component/plotly-component.component';
+
+import * as PlotlyJS from 'plotly.js-dist-min';
+import { PlotlyModule } from 'angular-plotly.js';
+
+PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
   declarations: [
@@ -32,7 +39,8 @@ import { LandingPopupComponent } from './landing-popup/landing-popup.component';
     FacetExplanationComponentComponent,
     WordCloudComponentComponent,
     FeatureWeightingComponentComponent,
-    LandingPopupComponent
+    LandingPopupComponent,
+    PlotlyComponentComponent
   ],
   imports: [
     BrowserModule,
@@ -43,7 +51,9 @@ import { LandingPopupComponent } from './landing-popup/landing-popup.component';
     HttpClientModule,
     NgChartsModule,
     NgxSliderModule,
-    NgxSpinnerModule  ],
+    NgxSpinnerModule,
+    CommonModule, 
+    PlotlyModule  ],
   providers: [],
   entryComponents: [AppComponent,LandingPopupComponent,ScatterComponentComponent,FacetExplanationComponentComponent],
   bootstrap: [AppComponent]
