@@ -1,3 +1,2 @@
-Dockerfile
+Dockerfile.dev
 environment.yml
-requirements.txt

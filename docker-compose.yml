@@ -3,7 +3,7 @@ services:
   backend:
     build:
       context: ./thesis-backend/
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: chan-backend
     image: chan-backend
     ports:
@@ -11,6 +11,7 @@ services:
     networks:
       - chandan_connection
     volumes:
+      - "./thesis-backend/:/backend"
       - "/home/srinath/Documents/tmp/chandan_tmp/:/backend/dirs_path"
 
   frontend:
