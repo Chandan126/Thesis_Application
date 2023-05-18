@@ -108,3 +108,5 @@ thesis-backend/R2
 thesis-backend/R5
 thesis-backend/TREC
 thesis-frontend/node_modules
+
+__pycache__/
