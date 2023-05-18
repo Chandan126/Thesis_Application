@@ -248,7 +248,7 @@ def fetch_article_div(sessionId,source):
     for i in range(5):
        path = backend_path + sessionId + '/' + source + '/' + files_list[i] + '_kmeans.parquet.gzip'
        df_k = pd.read_parquet(path)
-       for j in range(len(df_k.columns)-1):
+       for j in range(len(df_k.columns)):
           generated_feature_list.append(feature_list[i] + str(j))
     return generated_feature_list
 
@@ -413,7 +413,7 @@ def get_feature_vectors(data,label_feature,sessionId,source):
     all_feature_vec.append(feature_vec)
   return all_feature_vec
 
-def get_all_feature_vectors(sessionId,source,feature_sizes_k):
+def get_all_feature_vectors(sessionId,source):
   files_list = ['all_events_k_x_means_labelled','all_whats_k_x_means_labelled','all_whens_k_x_means_labelled','all_wheres_k_x_means_labelled','all_whos_k_x_means_labelled']
   output_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
   for i in range(5):
@@ -421,6 +421,7 @@ def get_all_feature_vectors(sessionId,source,feature_sizes_k):
     df = pd.read_parquet(file_input)
     k_vectors = get_feature_vectors(df,'k_means',sessionId,source)
     k_vector_df = pd.DataFrame(k_vectors)
+    k_vector_df.columns = k_vector_df.columns.astype(str)
     output_file = backend_path+ sessionId + '/' + source + '/' + output_list[i] + '_kmeans.parquet.gzip'
     k_vector_df.to_parquet(output_file,compression='gzip')
 
@@ -519,7 +520,7 @@ def generate_training_data(data,relevance,not_relevance):
 def get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights):
     files_list = ['all_events_feature_vector', 'all_whats_feature_vector', 'all_whens_feature_vector', 'all_wheres_feature_vector', 'all_whos_feature_vector']
     base_path = backend_path + sessionId + '/' + source + '/{}_kmeans.parquet.gzip'
-    dfs = [pd.read_parquet(base_path.format(f)).drop(['Unnamed: 0'], axis=1) for f in files_list]
+    dfs = [pd.read_parquet(base_path.format(f)) for f in files_list]
     k_final_vectors = np.concatenate([df.values for df in dfs], axis=1)
     x_train = None
     y_train = None
@@ -541,7 +542,7 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
   not_relevant_docs = json.loads(not_relevant_docs)
   increase_local_weights = json.loads(increase_local_weights) if increase_local_weights else None
   decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
-  get_all_feature_vectors(sessionId,source,feature_sizes_k)
+  get_all_feature_vectors(sessionId,source)
   if(len(relevant_docs)>0):
     result_df = pd.read_parquet(output_path,index_col=0)
     all_docs = result_df[result_df.highlight==1].index
@@ -567,6 +568,7 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
     result['relevance'] = np.ones(len(result))
     result['highlight'] = np.zeros(len(result))
   result['article_no'] = result.index
+  result.columns = result.columns.astype(str)
   result.to_parquet(output_path,compression='gzip')
   return {'message': 'Success'}
 
