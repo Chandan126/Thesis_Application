@@ -35,11 +35,11 @@ app.add_middleware(
 )
 
 # Update the paths accordingly
-backend_path = '/home/srinath/Documents/tmp/chandan_tmp/'
-R2_path = '/home/srinath/Documents/tmp/chandan_tmp/R2'
-R5_path = '/home/srinath/Documents/tmp/chandan_tmp/R5'
-Trec_path = '/home/srinath/Documents/tmp/chandan_tmp/TREC'
-parent_dir = '/home/srinath/Documents/tmp/chandan_tmp'
+backend_path = '/backend/dirs_path/'
+R2_path = '/backend/dirs_path/R2'
+R5_path = '/backend/dirs_path/R5'
+Trec_path = '/backend/dirs_path/TREC'
+parent_dir = '/backend/dirs_path'
 sources = ['R2','R5','TREC']
 @app.get("/session")
 def create_session():

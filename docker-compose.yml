@@ -1,0 +1,33 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: ./thesis-backend/
+      dockerfile: Dockerfile
+    container_name: chan-backend
+    image: chan-backend
+    ports:
+      - "8000:8000"
+    networks:
+      - chandan_connection
+    volumes:
+      - "/home/srinath/Documents/tmp/chandan_tmp/:/backend/dirs_path"
+
+  frontend:
+    build:
+      context: ./thesis-frontend/
+      dockerfile: Dockerfile.dev
+    container_name: chan-frontend
+    image: chan-frontend
+    ports:
+      - "4200:4200"
+    networks:
+      - chandan_connection
+    volumes:
+      - "./thesis-frontend/:/angular"
+      - "chan_node_vol:/angular/node_modules"
+
+networks:
+  chandan_connection:
+volumes:
+  chan_node_vol:

@@ -1,0 +1,27 @@
+FROM ubuntu:20.04
+
+WORKDIR /backend
+
+RUN apt update && \
+    apt install -y nano curl
+
+RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh
+
+# install in batch (silent) mode, does not edit PATH or .bashrc or .bash_profile
+# -p path
+# -f force
+RUN bash Miniconda3-py39_4.12.0-Linux-x86_64.sh -b -p /opt/conda
+
+RUN rm Miniconda3-py39_4.12.0-Linux-x86_64.sh
+
+ENV PATH=/opt/conda/bin:${PATH}
+
+COPY requirements.txt requirements.txt
+
+RUN conda install -y pip
+
+RUN pip install -r requirements.txt
+
+COPY . /backend
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
