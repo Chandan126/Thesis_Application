@@ -295,7 +295,6 @@ def read_vectors(df):
 @app.get("/get_facet_explanation/{sessionId}/{source}/{facet}/{article_no}")
 def get_facet_explanation(sessionId,source,facet,article_no):
   facet, label = facet.split(' ')
-  label = 4
   if('Whats' in facet):
     words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
   elif ('Wheres' in facet):
@@ -544,7 +543,7 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
   decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
   get_all_feature_vectors(sessionId,source)
   if(len(relevant_docs)>0):
-    result_df = pd.read_parquet(output_path,index_col=0)
+    result_df = pd.read_parquet(output_path)
     all_docs = result_df[result_df.highlight==1].index
     not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
     #print(relevant_docs)
