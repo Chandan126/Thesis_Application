@@ -100,8 +100,7 @@ export class PlotlyComponentComponent {
 
   // assign a on-click event when a specific point is being clicked.
   assignClickEvent() {
-    this.plotlyComponent.revision = 0; // this line is important to ensure that plotly has been initialized
-    if (this.plotlyComponent.plotlyInstance) {
+    if (this.plotlyComponent && this.plotlyComponent.plotlyInstance) {
       this.plotlyComponent.plotlyInstance.on('plotly_click', (data: any) => {
         for (let point of data.points) {
           // Get the text metadata of the clicked point
