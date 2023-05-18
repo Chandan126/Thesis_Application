@@ -7,15 +7,17 @@
                         <h3>{{content['article_title']}}</h3>
                     </mat-card-title>
                 </mat-card-header>
-                <mat-card-content>
+                <mat-card-content class="dialogBody">
                     <div>{{content['article_data']}}</div>
+                </mat-card-content>
+                <mat-card-actions class="dialogMatActions">
                     <div>
                         <br><br>
                         <label> Is this document relevant? </label>
                         <button (click)="onRelevanceClick()">Yes</button>
                         <button (click)="onNotRelevanceClick()">No</button>
                     </div>
-                </mat-card-content>
+                </mat-card-actions>
             </mat-card>
             <mat-card *ngIf="!isContent" class="my-article-card" style="border: 1px solid #000;margin:10px;">
                 <mat-card-header>
@@ -23,7 +25,7 @@
                         <h3>{{clickedBar}}</h3>
                     </mat-card-title>
                 </mat-card-header>
-                <mat-card-content>
+                <mat-card-content  class="dialogBody">
                     <app-word-cloud-component [clickedBar]="clickedBar"
                         [article]="data.selected_article" [source]="data.source"
                         (wordClicked)="onWordClicked($event)"></app-word-cloud-component>
@@ -37,7 +39,7 @@
                         <h3>Article Vector Representation</h3>
                     </mat-card-title>
                 </mat-card-header>
-                <mat-card-content>
+                <mat-card-content  class="dialogBody">
                     <app-article-explanation
                         [clickedPoint]="data.selected_article"
                         [data]="data.data"

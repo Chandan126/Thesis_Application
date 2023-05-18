@@ -1,0 +1,12 @@
+.dialogBody {
+    height: 80%;
+    overflow: auto;
+}
+
+.my-article-card {
+    height: 33em;
+}
+
+.dialogMatActions {
+    margin-bottom: 1em;
+}
