@@ -9,10 +9,12 @@
       <input type="text" [(ngModel)]="query" placeholder="Enter a search query">
       <button mat-button class="search-button" (click)="search()">Search</button>
       <button mat-button class="recluster-button" type="submit" (click)="recluster()">Recluster</button>
-      <br><br><br><br>
       <ngx-spinner type="ball-spin">
         <p style="color: white">Loading...</p>
       </ngx-spinner>
+    </div>
+
+    <div>
       <app-scatter-component [data]="data" [labels]="labels" [articleFeatureDiv]="articleFeatureDiv" [source]="source"></app-scatter-component>
     </div>
     
