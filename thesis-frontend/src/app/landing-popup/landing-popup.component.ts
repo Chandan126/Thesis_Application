@@ -9,6 +9,10 @@ import { Router } from '@angular/router';
   styleUrls: ['./landing-popup.component.css']
 })
 export class LandingPopupComponent implements OnInit{
+
+  systemSources = ['System Red','System Blue'];
+  systemSource: string;
+  selectedSystem: string;
   constructor(private dataService: DataServiceService, private router: Router) {}
 
   ngOnInit() {
@@ -16,7 +20,7 @@ export class LandingPopupComponent implements OnInit{
   }
 
   login() {
-    this.dataService.initSession();
+    this.dataService.initSession(this.selectedSystem);
     //this.dialogRef.close();
     this.router.navigateByUrl('/home');
   }

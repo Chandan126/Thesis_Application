@@ -52,7 +52,7 @@ export class HomeComponentComponent implements OnInit {
       else{
         this.router.navigateByUrl('/login');
       }
-    }, 1000);
+    }, 3000);
   }
 
   getDataSourceFromAPI() {

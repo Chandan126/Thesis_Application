@@ -2,7 +2,9 @@ from operator import itemgetter
 import string
 from typing import Union
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import NearestNeighbors
 from fastapi import FastAPI
+import logging
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from collections import Counter
@@ -12,6 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from yellowbrick.cluster import KElbowVisualizer
 from sklearn.manifold import TSNE
 import numpy as np
+import random
 import joblib
 from uuid import uuid4
 import os
@@ -25,6 +28,9 @@ import base64
 import io
 
 app = FastAPI()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,11 +47,22 @@ R5_path = '/backend/dirs_path/R5'
 Trec_path = '/backend/dirs_path/TREC'
 parent_dir = '/backend/dirs_path'
 sources = ['R2','R5','TREC']
-@app.get("/session")
-def create_session():
+@app.get("/session/{system}")
+def create_session(system):
     session_id = str(uuid4())
     path = os.path.join(parent_dir,session_id)
     os.mkdir(path)
+
+    global logger
+    log_file_path = os.path.join(path, "logs.log")
+    os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+    file_handler = logging.FileHandler(log_file_path)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.info("Session created")
+    logger.info('System accessed is '+ str(system))
+
     src = [R2_path,R5_path,Trec_path]
     for i,source in enumerate(src):
        new_path = os.path.join(path,sources[i])
@@ -59,6 +76,7 @@ def create_session():
 
 @app.get("/sources")
 def read_sources():
+    logger.info("Read all the sources")
     return ['R2','R5','TREC']
 
 def search(sessionId,source,query):
@@ -75,6 +93,8 @@ def search(sessionId,source,query):
 
 @app.get("/sources/{sessionId}/{source}/{query}")
 def read_book_level_scatter(sessionId,source,query):
+    logger_string = 'Reading the ' + str(source) + ' result file'
+    logger.info(logger_string)
     path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
     #print(query)
     result_df = pd.read_parquet(path)
@@ -89,6 +109,7 @@ def read_book_level_scatter(sessionId,source,query):
 
 @app.get("/labels/{source}")
 def get_label_number(source):
+    logger.info('Read the ' + str(source) + ' label numbers')
     if(source=='R2'):
         return '2'
     elif(source=='R5'):
@@ -167,6 +188,7 @@ def get_global_explanations(clusters,result_df,input_path,data_path):
 
 @app.get("/global_explanations/{sessionId}/{source}/{system}")
 def fetch_global_explanations(sessionId,source,system):
+    logger.info('Selected Global explanation type ' + str(system))
     if(system=='A'):
       path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
       input_path = backend_path + sessionId + '/' + source + '/'
@@ -186,6 +208,7 @@ def fetch_global_explanations(sessionId,source,system):
     
 @app.get("/get_articles/{sessionId}/{source}/{selectedClusterNumber}")
 def fetch_articles(sessionId,source,selectedClusterNumber):
+    logger.info('Fetching Articles from ' + str(source) + ' and cluster ' + str(selectedClusterNumber))
     clusterNum = int(selectedClusterNumber.split(" ")[1])
     path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
     result_df = pd.read_parquet(path)
@@ -225,6 +248,7 @@ def get_important_words(article1,article2,input_path,data_path):
 
 @app.get("/local_explanations/{sessionId}/{source}/{article1}/{article2}")
 def fetch_local_explanations(sessionId,source,article1,article2):
+  logger.info('Fetching local explanation for ' + str(article1) + ' and ' + str(article2))
   article1 = int(article1.split(" ")[1])
   article2 = int(article2.split(" ")[1])
   data_path = backend_path + sessionId + '/' + source + '/data.parquet.gzip' 
@@ -233,7 +257,8 @@ def fetch_local_explanations(sessionId,source,article1,article2):
   return {'article_1':article1_words,'article_2':article2_words}
 
 @app.get("/get_article_content/{sessionId}/{source}/{article}")
-def fetch_local_explanations(sessionId,source,article):
+def get_article_content(sessionId,source,article):
+    logger.info('Fetching article content for ' + str(source) + ' and article number' + str(article))
     path = backend_path + sessionId + '/' + source + '/data.parquet.gzip'
     data_df = pd.read_parquet(path)
     article_data = data_df.iloc[int(article)].content
@@ -242,6 +267,7 @@ def fetch_local_explanations(sessionId,source,article):
 
 @app.get("/get_article_div/{sessionId}/{source}")
 def fetch_article_div(sessionId,source):
+    logger.info('Fetching article division for ' + str(source))
     feature_list = ['Events ','Whats ','Whens ','Wheres ','Whos ']
     files_list = ['all_events_feature_vector','all_whats_feature_vector','all_whens_feature_vector','all_wheres_feature_vector','all_whos_feature_vector']
     generated_feature_list = []
@@ -292,37 +318,111 @@ def read_vectors(df):
   vectors = np.vstack(vectors)
   return vectors
 
-@app.get("/get_facet_explanation/{sessionId}/{source}/{facet}/{article_no}")
-def get_facet_explanation(sessionId,source,facet,article_no):
+def generate_random_words(facet):
+  what_list = ["question", "mystery", "answer", "fact", "information", "knowledge", "puzzle", "riddle", "enigma",
+             "solution", "query", "concept", "phenomenon", "thing", "object", "idea", "task", "challenge",
+             "occurrence", "incident", "happening", "event", "episode", "circumstance", "situation", "scenario",
+             "condition", "state", "circumstance", "status", "position", "location", "place", "site", "venue",
+             "destination", "spot", "area", "region", "country", "city", "town", "village", "locale", "neighborhood",
+             "time", "moment", "date", "period", "duration", "schedule", "timeline"]
+
+  who_list = ["person", "individual", "human", "man", "woman", "child", "adult", "elder", "citizen", "stranger",
+            "guest", "resident", "character", "figure", "celebrity", "artist", "musician", "actor", "actress",
+            "politician", "leader", "hero", "villain", "spectator", "audience", "participant", "player", "athlete",
+            "team", "crew", "cast", "group", "organization", "company", "community", "society", "population",
+            "public", "fan", "follower", "supporter", "friend", "family", "relative", "colleague"]
+
+  when_list = ["time", "moment", "date", "period", "duration", "schedule", "deadline", "appointment", "event",
+             "occasion", "year", "month", "week", "day", "hour", "minute", "second", "morning", "afternoon",
+             "evening", "night", "dawn", "twilight", "sunset", "sunrise", "past", "present", "future", "now",
+             "soon", "early", "late", "yesterday", "today", "tomorrow", "before", "after", "during", "while",
+             "once", "twice", "always", "never", "frequently", "occasionally", "regularly", "rarely"]
+
+  events_list = ["concert", "festival", "performance", "exhibition", "show", "party", "celebration", "ceremony",
+               "wedding", "birthday", "anniversary", "conference", "seminar", "meeting", "gathering", "competition",
+               "tournament", "match", "game", "race", "sport", "parade", "procession", "march", "protest", "demonstration",
+               "campaign", "launch", "reception", "farewell", "farewell", "award", "prize", "presentation",
+               "exposition", "fair", "market", "sale", "auction", "carnival", "fairground", "circus", "performance"]
+
+  where_list = ["location", "place", "site", "venue", "destination", "spot", "area", "region", "country", "city",
+              "town", "village", "locale", "neighborhood", "address", "geography", "terrain", "landscape", "map",
+              "direction", "boundary", "district", "zone", "province", "state", "continent", "island", "ocean",
+              "sea", "coast", "river", "lake", "mountain", "forest", "park", "building", "structure", "street",
+              "road", "highway", "bridge", "airport", "station", "port", "hotel", "restaurant", "store"]
+  
+  words = []
+  
+  if facet == "Whats":
+      words.extend(random.sample(what_list, 7))
+      words.extend(random.sample(where_list, 2))
+      words.extend(random.sample(when_list, 2))
+      words.extend(random.sample(who_list, 2))
+      words.extend(random.sample(events_list, 2))
+  elif facet == "Wheres":
+      words.extend(random.sample(where_list, 7))
+      words.extend(random.sample(what_list, 2))
+      words.extend(random.sample(when_list, 2))
+      words.extend(random.sample(who_list, 2))
+      words.extend(random.sample(events_list, 2))
+  elif facet == "Whens":
+      words.extend(random.sample(when_list, 7))
+      words.extend(random.sample(what_list, 2))
+      words.extend(random.sample(where_list, 2))
+      words.extend(random.sample(who_list, 2))
+      words.extend(random.sample(events_list, 2))
+  elif facet == "Whos":
+      words.extend(random.sample(who_list, 7))
+      words.extend(random.sample(what_list, 2))
+      words.extend(random.sample(where_list, 2))
+      words.extend(random.sample(when_list, 2))
+      words.extend(random.sample(events_list, 2))
+  elif facet == "Events":
+      words.extend(random.sample(events_list, 7))
+      words.extend(random.sample(what_list, 2))
+      words.extend(random.sample(where_list, 2))
+      words.extend(random.sample(when_list, 2))
+      words.extend(random.sample(who_list, 2))
+    
+  return words
+
+
+@app.get("/get_facet_explanation/{sessionId}/{selectedSystem}/{source}/{facet}/{article_no}")
+def get_facet_explanation(sessionId,selectedSystem,source,facet,article_no):
   facet, label = facet.split(' ')
-  if('Whats' in facet):
-    words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
-  elif ('Wheres' in facet):
-    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_wheres_k_x_means_labelled.parquet.gzip')
-  elif ('Events' in facet):
-    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_events_k_x_means_labelled.parquet.gzip')
-  elif ('Whens' in facet):
-    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whens_k_x_means_labelled.parquet.gzip')
-  elif ('Whos' in facet):
-    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whos_k_x_means_labelled.parquet.gzip')
-  mask = (words_df['Article_no'] == int(article_no)) & (words_df['k_labels'] == int(label))
-  all_events = np.unique(words_df.loc[mask].Events.values)
-  words_df = words_df[words_df['k_labels'] == int(label)]
-  words_df_without_duplicates = words_df.drop_duplicates(subset=['Events'])
-  words_df_without_duplicates = words_df_without_duplicates.reset_index()
-  words_df_without_duplicates = words_df_without_duplicates[~words_df_without_duplicates.Events.isin(all_events)]
-  all_words = []
-  all_vecs = read_vectors(words_df_without_duplicates)
-  for word in all_events:
-    vector = read_ind_vectors(words_df[words_df.Events==word].vectors.values[0])
-    if(int(20/len(all_events))<5):
-      k = 5
-    else:
-      k = int(20/len(all_events))
-    indices = find_closest_rows(all_vecs,vector,k)
-    parent_names = words_df_without_duplicates.iloc[indices]['Parent_Words'].values
-    all_words.append(word)
-    all_words.extend(parent_names)
+  logger.info('Fetching facet explanation for ' + str(selectedSystem) + ' and source' + str(source) + ' for facet ' + str(facet) + ' article num ' + str(article_no))
+  if((selectedSystem == 'System Red' and source == 'R5') or (selectedSystem == 'System Blue' and source == 'TREC')):
+    logger.info('Getting correct facet explanation')
+    if('Whats' in facet):
+      words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
+    elif ('Wheres' in facet):
+      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_wheres_k_x_means_labelled.parquet.gzip')
+    elif ('Events' in facet):
+      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_events_k_x_means_labelled.parquet.gzip')
+    elif ('Whens' in facet):
+      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whens_k_x_means_labelled.parquet.gzip')
+    elif ('Whos' in facet):
+      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whos_k_x_means_labelled.parquet.gzip')
+    mask = (words_df['Article_no'] == int(article_no)) & (words_df['k_labels'] == int(label))
+    all_events = np.unique(words_df.loc[mask].Events.values)
+    words_df = words_df[words_df['k_labels'] == int(label)]
+    words_df_without_duplicates = words_df.drop_duplicates(subset=['Events'])
+    words_df_without_duplicates = words_df_without_duplicates.reset_index()
+    words_df_without_duplicates = words_df_without_duplicates[~words_df_without_duplicates.Events.isin(all_events)]
+    all_words = []
+    all_vecs = read_vectors(words_df_without_duplicates)
+    for word in all_events:
+      vector = read_ind_vectors(words_df[words_df.Events==word].vectors.values[0])
+      if(int(20/len(all_events))<5):
+        k = 5
+      else:
+        k = int(20/len(all_events))
+      indices = find_closest_rows(all_vecs,vector,k)
+      parent_names = words_df_without_duplicates.iloc[indices]['Parent_Words'].values
+      all_words.append(word)
+      all_words.extend(parent_names)
+  else:
+    logger.info('Getting random facet explanation')
+    all_words = generate_random_words(facet)
   data = []
   
   # check if the word cloud is empty
@@ -349,6 +449,7 @@ def get_facet_explanation(sessionId,source,facet,article_no):
 
 @app.get("/get_similar_words/{sessionId}/{source}/{facet}/{word}")
 def get_most_similar_words(sessionId,source,facet,word):
+  logger.info('Fetching most similar words for ' + str(source) + ' for facet ' + str(facet) + ' word ' + str(word))
   facet, label = facet.split(' ')
   all_words = []
   if('Whats' in facet):
@@ -474,49 +575,57 @@ def run_logistic_regression(x_train, y_train):
   return normalized_value
 
 
-def calculate_weights(feature_sizes_k,x_train,y_train,global_weights,increase_local_weights=None,decrease_local_weights=None):
+def calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,global_weights,increase_local_weights=None,decrease_local_weights=None):
   features = ['Whats 0','Whens 0','Wheres 0','Whos 0']
-  if(x_train is not None):
-    similarity_weights = run_logistic_regression(x_train,y_train)
   all_weight = np.ones(len(feature_sizes_k))
-  n = 0
-  for i,weight in enumerate(global_weights):
-    weight = int(weight)
-    try:
-      final_indices = feature_sizes_k.index(features[i])
-    except:
-      final_indices = len(feature_sizes_k)
-    if weight==1:
-      weight=0.5
-    elif weight==2:
-      weight=1
-    elif weight==4:
-      weight=5
-    all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),weight)
-    n = final_indices
   #print(all_weight)
-  all_weight_set = set(all_weight)
-  global_value = all_weight
-  if(len(all_weight_set)!=1):
-    global_value = find_normalized_value(all_weight)
-  resultant_vector = similarity_weights + global_value / 2
-  if increase_local_weights!=None:
-    increase_weights = [feature_sizes_k.index(local_weight) for local_weight in increase_local_weights]
-    for i in increase_weights:
-      resultant_vector[i] = resultant_vector[i] * (4)
-  if decrease_local_weights!=None:
-    decreased_weights = [feature_sizes_k.index(local_weight) for local_weight in decrease_local_weights]
-    for i in decreased_weights:
-      resultant_vector[i] = resultant_vector[i] * (0.5)
-  #print(all_weight)
-  return resultant_vector
+  if((selectedSystem == 'System Red' and source == 'R5') or (selectedSystem == 'System Blue' and source == 'TREC')):
+    logger.info('Actual Weights')
+    if(x_train is not None):
+      similarity_weights = run_logistic_regression(x_train,y_train)
+    n = 0
+    for i,weight in enumerate(global_weights):
+      weight = int(weight)
+      try:
+        final_indices = feature_sizes_k.index(features[i])
+      except:
+        final_indices = len(feature_sizes_k)
+      if weight==1:
+        weight=0.5
+      elif weight==2:
+        weight=1
+      elif weight==4:
+        weight=5
+      all_weight[n:final_indices] = np.full(len(all_weight[n:final_indices]),weight)
+      n = final_indices
+    #print(all_weight)
+    all_weight_set = set(all_weight)
+    global_value = all_weight
+    if(len(all_weight_set)!=1):
+      global_value = find_normalized_value(all_weight)
+    resultant_vector = similarity_weights + global_value / 2
+    if increase_local_weights!=None:
+      increase_weights = [feature_sizes_k.index(local_weight) for local_weight in increase_local_weights]
+      for i in increase_weights:
+        resultant_vector[i] = resultant_vector[i] * (4)
+    if decrease_local_weights!=None:
+      decreased_weights = [feature_sizes_k.index(local_weight) for local_weight in decrease_local_weights]
+      for i in decreased_weights:
+        resultant_vector[i] = resultant_vector[i] * (0.5)
+    #print(resultant_vector)
+    return resultant_vector
+  else:
+    logger.info('Random Weights')
+    random_nums = np.random.uniform(0, 5, size=all_weight.shape)
+    all_weight = np.where(all_weight == 1, random_nums, all_weight)
+    return all_weight
 
 def generate_training_data(data,relevance,not_relevance):
   x_train = data[np.concatenate((relevance, not_relevance))]
   y_train = np.concatenate((np.ones(len(relevance)), np.zeros(len(not_relevance))))
   return x_train, y_train
 
-def get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights):
+def get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights):
     files_list = ['all_events_feature_vector', 'all_whats_feature_vector', 'all_whens_feature_vector', 'all_wheres_feature_vector', 'all_whos_feature_vector']
     base_path = backend_path + sessionId + '/' + source + '/{}_kmeans.parquet.gzip'
     dfs = [pd.read_parquet(base_path.format(f)) for f in files_list]
@@ -525,16 +634,38 @@ def get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,
     y_train = None
     if(len(relevant_docs)>0):
       x_train, y_train = generate_training_data(k_final_vectors,relevant_docs,not_relevant_docs)
-    importance = calculate_weights(feature_sizes_k,x_train,y_train,global_weights,increase_local_weights)
+    importance = calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,global_weights,increase_local_weights)
     if importance is None:
         importance = np.ones(k_final_vectors.shape[1])
     return k_final_vectors,importance
 
 
+def get_nearest_neighbours(relevant_docs,res_df):
+  relevant_docs_list = list(relevant_docs)
+  k = 5  # Number of nearest neighbors to find
+  nn = NearestNeighbors(n_neighbors=k)
+  all_points = res_df[['x_axis', 'y_axis']].values
+  nn.fit(all_points)
+  nearest_neighbors = []
+  # Find the nearest neighbors for each relevant point
+  for doc_index in relevant_docs_list:
+      # Get the coordinates of the relevant point
+      relevant_point = res_df.loc[doc_index, ['x_axis', 'y_axis']].values.reshape(1, -1)
 
-@app.get("/recluster_words/{sessionId}/{source}/{feature_sizes_k}/{relevant_docs}/{not_relevant_docs}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
-def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,increase_local_weights=None,decrease_local_weights=None,):
+      # Find the indices of the nearest neighbors for the relevant point
+      _, nearest_indices = nn.kneighbors(relevant_point)
+
+      # Retrieve the rows corresponding to the nearest neighbor indices
+      nearest_neighbors.append(res_df.iloc[nearest_indices.flatten()].index.tolist())
+  return nearest_neighbors
+
+
+@app.get("/recluster_words/{sessionId}/{selectedSystem}/{source}/{feature_sizes_k}/{relevant_docs}/{not_relevant_docs}/{global_weights}/{increase_local_weights}/{decrease_local_weights}")
+def recluster(sessionId,selectedSystem,source,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,increase_local_weights=None,decrease_local_weights=None,):
+  logger.info('Reclustering for ' + str(selectedSystem) +' for source ' + str(source) +' for relevant docs ' + str(relevant_docs)
+               + ' for non-relevant docs ' + str(not_relevant_docs) + ' for global_weights ' + str(global_weights) + ' for increase_local_weights ' + str(increase_local_weights) + ' for decrease_local_weights ' + str(decrease_local_weights)) 
   output_path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
+  previous_output_path = backend_path + sessionId + '/' + source + '/prev_result.parquet.gzip'
   feature_sizes_k = json.loads(feature_sizes_k)
   global_weights = json.loads(global_weights)
   relevant_docs = json.loads(relevant_docs)
@@ -542,14 +673,21 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
   increase_local_weights = json.loads(increase_local_weights) if increase_local_weights else None
   decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
   get_all_feature_vectors(sessionId,source)
+  print(relevant_docs)
   if(len(relevant_docs)>0):
     result_df = pd.read_parquet(output_path)
+    old_relevance = result_df[(result_df['highlight'] == 1.0) & (result_df['relevance'] == 1.0)]
+    print(old_relevance)
+    logger.info(str(old_relevance))
     all_docs = result_df[result_df.highlight==1].index
     not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
-    #print(relevant_docs)
-    #print(all_docs)
-    #print(not_relevant_docs)
-  k_final_vectors,importance = get_final_vectors(sessionId,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights)
+    logger.info(str(relevant_docs))
+    print(relevant_docs)
+    logger.info(str(all_docs))
+    print(all_docs)
+    logger.info(str(not_relevant_docs))
+    print(not_relevant_docs)
+  k_final_vectors,importance = get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights)
   if(source=='R2'):
     labels_df = get_book_level_clustering(k_final_vectors,importance,2)
   elif(source=='R5'):
@@ -558,10 +696,17 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
     labels_df = get_book_level_clustering(k_final_vectors,importance,11)
   tsne_df = pd.DataFrame(get_tsne(k_final_vectors,20),columns=['x_axis','y_axis'])
   result = pd.concat([pd.DataFrame(k_final_vectors),labels_df,tsne_df],axis=1)
+  nearest_neighbors = get_nearest_neighbours(relevant_docs,result)
+  logger.info('Nearest Neighbour ' + str(nearest_neighbors))
+  print(nearest_neighbors)
   if(len(relevant_docs)>0):
     result['relevance'] = np.zeros(len(result))
+    result['highlight'] = np.zeros(len(result))
     result.loc[relevant_docs, 'highlight'] = 1
     result.loc[relevant_docs, 'relevance'] = 1
+    for indices in nearest_neighbors:
+      result.loc[indices,'highlight'] = 1
+      result.loc[indices,'relevance'] = 1
     result.loc[not_relevant_docs, 'relevance'] = 0
   else:
     result['relevance'] = np.ones(len(result))
@@ -569,5 +714,6 @@ def recluster(sessionId,source,feature_sizes_k,relevant_docs,not_relevant_docs,g
   result['article_no'] = result.index
   result.columns = result.columns.astype(str)
   result.to_parquet(output_path,compression='gzip')
+  old_relevance.to_parquet(previous_output_path,compression='gzip')
   return {'message': 'Success'}
 

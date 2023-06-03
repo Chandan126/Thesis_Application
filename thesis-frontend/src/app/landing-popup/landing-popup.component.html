@@ -4,10 +4,22 @@
     <button (click)="login()">Login</button>
 </div> -->
 <mat-card>
-    <mat-card-title>Welcome to EX Cluster</mat-card-title>
-<mat-card-content>
-  <div class="button">
-    <button (click)="login()" mat-button>Start Session</button>
-  </div>
-</mat-card-content>
+  <mat-card-title>Welcome to EX Cluster</mat-card-title>
+  <mat-card-content>
+    <div class="form-wrapper">
+      <div class="select-wrapper">
+        <label>Select System:</label>
+        <div>
+          <select [(ngModel)]="selectedSystem" matNativeControl >
+            <option *ngFor="let systemSource of systemSources" [value]="systemSource">
+              {{ systemSource }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="button-wrapper">
+        <button (click)="login()" mat-button>Start Session</button>
+      </div>
+    </div>
+  </mat-card-content>
 </mat-card>

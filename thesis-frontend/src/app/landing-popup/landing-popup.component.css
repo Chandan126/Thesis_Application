@@ -1,22 +1,29 @@
 :host {
-    display: flex;
-    justify-content: center;
-    margin: 100px 0px;
-  }
+  display: flex;
+  justify-content: center;
+  margin: 100px 0px;
+}
 
-  .mat-form-field {
-    width: 100%;
-    min-width: 300px;
-  }
+.mat-form-field {
+  width: 100%;
+  min-width: 300px;
+}
 
-  mat-card-title,
-  mat-card-content {
-    display: flex;
-    justify-content: center;
-  }
+mat-card-title,
+mat-card-content {
+  display: flex;
+  justify-content: center;
+}
 
+.form-wrapper {
+  display: flex;
+  flex-direction: column;
+}
 
-  .button {
-    display: flex;
-    justify-content: flex-end;
-  }
+.select-wrapper {
+  margin-bottom: 10px;
+}
+
+.button-wrapper {
+  align-self: flex-end;
+}

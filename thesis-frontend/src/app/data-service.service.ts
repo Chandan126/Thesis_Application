@@ -7,13 +7,15 @@ export class DataServiceService {
 
   private sessionId: any;
   relevantDocs: any[] = [];
+  selectedSystem: string;
   notRelevantDocs: any[] = [];
   interestingClusters: any[] = [];
   notinterestingClusters: any[] = [];
   constructor(private http: HttpClient) { }
 
-  initSession(){
-    return this.http.get('http://127.0.0.1:8000/session').subscribe((data) => {
+  initSession(system: string){
+    this.selectedSystem = system;
+    return this.http.get(`http://127.0.0.1:8000/session/${system}`).subscribe((data) => {
       this.sessionId = data;
       localStorage.setItem('sessionId', this.sessionId.sessionId);
       console.log(`Session started ${this.sessionId.sessionId}`);
@@ -45,6 +47,7 @@ export class DataServiceService {
   }
 
   getUserFeedbacks(){
+    console.log(this.selectedSystem);
     return {'relevantDocs':this.relevantDocs,'notRelevantDocs':this.notRelevantDocs,
     'interestingClusters':this.interestingClusters, 'notInterestingClusters':this.notinterestingClusters  }
   }
@@ -81,7 +84,7 @@ export class DataServiceService {
   }
 
   getFacetExplanation(source: string,facet: string,article_no:string){
-    return this.http.get(`http://127.0.0.1:8000/get_facet_explanation/${this.sessionId.sessionId}/${source}/${facet}/${article_no}`);
+    return this.http.get(`http://127.0.0.1:8000/get_facet_explanation/${this.sessionId.sessionId}/${this.selectedSystem}/${source}/${facet}/${article_no}`);
   }
 
   getSimilarWords(source: string,facet: string,word:string){
@@ -99,6 +102,6 @@ export class DataServiceService {
     const not_relevant_docs_json = JSON.stringify(not_relevant_docs);
     const increase_local_weights_json = JSON.stringify(increase_local_weights) ? JSON.stringify(increase_local_weights) : null;
     const decrease_local_weights_json = JSON.stringify(decrease_local_weights) ? JSON.stringify(decrease_local_weights) : null;
-    return this.http.get(`http://127.0.0.1:8000/recluster_words/${this.sessionId.sessionId}/${source}/${feature_sizes_k_json}/${relevant_docs_json}/${not_relevant_docs_json}/${global_weights_json}/${increase_local_weights_json}/${decrease_local_weights_json}`);
+    return this.http.get(`http://127.0.0.1:8000/recluster_words/${this.sessionId.sessionId}/${this.selectedSystem}/${source}/${feature_sizes_k_json}/${relevant_docs_json}/${not_relevant_docs_json}/${global_weights_json}/${increase_local_weights_json}/${decrease_local_weights_json}`);
   }
 }
