@@ -673,19 +673,23 @@ def recluster(sessionId,selectedSystem,source,feature_sizes_k,relevant_docs,not_
   increase_local_weights = json.loads(increase_local_weights) if increase_local_weights else None
   decrease_local_weights = json.loads(decrease_local_weights) if decrease_local_weights else None
   get_all_feature_vectors(sessionId,source)
-  print(relevant_docs)
   if(len(relevant_docs)>0):
     result_df = pd.read_parquet(output_path)
     old_relevance = result_df[(result_df['highlight'] == 1.0) & (result_df['relevance'] == 1.0)]
+    set1 = set(old_relevance.article_no.to_list())
+    set2 = set(relevant_docs)
+    intersection = set1.intersection(set2)
+    percentage = len(intersection) / len(old_relevance) * 100
+    logger.info(f"Percentage of list2 elements present in list1: {percentage:.2f}%")
     print(old_relevance)
-    logger.info(str(old_relevance))
+    logger.info('Old Relevance documents are ' + str(old_relevance.article_no.to_list()))
     all_docs = result_df[result_df.highlight==1].index
     not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
-    logger.info(str(relevant_docs))
+    logger.info('Relevant documents are ' + str(relevant_docs))
     print(relevant_docs)
-    logger.info(str(all_docs))
+    logger.info('All documents are ' + str(all_docs))
     print(all_docs)
-    logger.info(str(not_relevant_docs))
+    logger.info('Not Relevant documents are ' + str(not_relevant_docs))
     print(not_relevant_docs)
   k_final_vectors,importance = get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights)
   if(source=='R2'):
@@ -717,3 +721,24 @@ def recluster(sessionId,selectedSystem,source,feature_sizes_k,relevant_docs,not_
   old_relevance.to_parquet(previous_output_path,compression='gzip')
   return {'message': 'Success'}
 
+@app.get("/logout/{sessionId}")
+def logout(sessionId):
+  # Get a list of all files in the folder
+  session_path = os.path.join(parent_dir, sessionId)
+
+  subfolders = [f for f in os.listdir(session_path) if os.path.isdir(os.path.join(session_path, f))]
+  # Iterate over the subfolders
+  for subfolder in subfolders:
+      subfolder_path = os.path.join(session_path, subfolder)
+      
+      # Get a list of all files in the subfolder
+      files = os.listdir(subfolder_path)
+      
+      # Iterate over the files
+      for file_name in files:
+          file_path = os.path.join(subfolder_path, file_name)
+          
+          # Check if the file is not "result.parquet.gzip" or "prev_result.parquet.gzip"
+          if file_name != "result.parquet.gzip" and file_name != "prev_result.parquet.gzip":
+              # Delete the file
+              os.remove(file_path)

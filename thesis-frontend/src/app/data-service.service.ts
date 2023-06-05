@@ -95,6 +95,10 @@ export class DataServiceService {
     return this.http.get(`http://127.0.0.1:8000/reassign_words/${this.sessionId.sessionId}/${source}/${facet}/${word}/${new_cluster}`);
   }
 
+  logout(){
+    return this.http.get(`http://127.0.0.1:8000/logout/${this.sessionId.sessionId}`);
+  }
+
   reClusterWords(feature_sizes_k: string[],source:string,global_weights: string[],increase_local_weights: string[],decrease_local_weights:string[],relevant_docs:string[],not_relevant_docs:string[]){
     const feature_sizes_k_json = JSON.stringify(feature_sizes_k);
     const global_weights_json = JSON.stringify(global_weights);

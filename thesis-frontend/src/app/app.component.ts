@@ -12,7 +12,7 @@ export class AppComponent implements OnInit {
   title = 'thesis-frontend';
   sessionId: any;
 
-  constructor(private dialog: MatDialog, private router: Router){
+  constructor(private dialog: MatDialog, private router: Router, private dataService: DataServiceService){
   }
 
   ngOnInit() {
@@ -26,6 +26,7 @@ export class AppComponent implements OnInit {
   }
 
   logout() {
+    this.dataService.logout().subscribe();
     if(localStorage.getItem('sessionId')!==undefined){
       localStorage.removeItem('sessionId');
     }
