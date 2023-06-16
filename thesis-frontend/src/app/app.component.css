@@ -5,4 +5,8 @@ header {
     padding: 1rem;
 }
 
+.highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
 

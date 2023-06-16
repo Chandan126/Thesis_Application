@@ -22,4 +22,7 @@ RUN conda install -y pip
 
 RUN pip install -r requirements.txt
 
+# Add NLTK resource download step
+RUN python -m nltk.downloader stopwords
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

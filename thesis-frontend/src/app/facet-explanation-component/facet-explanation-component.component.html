@@ -8,7 +8,7 @@
                     </mat-card-title>
                 </mat-card-header>
                 <mat-card-content class="dialogBody">
-                    <div>{{content['article_data']}}</div>
+                    <div [innerHTML]="content['article_data'] | highlightWords: importantWords"></div>
                 </mat-card-content>
                 <mat-card-actions class="dialogMatActions">
                     <div>

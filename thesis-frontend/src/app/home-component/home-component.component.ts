@@ -1,8 +1,8 @@
-import { Component,ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { DataServiceService } from '../data-service.service';
-import {Router} from '@angular/router'
+import { Router } from '@angular/router'
 import { NgxSpinnerService } from 'ngx-spinner';
-import { zip } from 'rxjs';
+import { zip, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home-component',
@@ -27,10 +27,10 @@ export class HomeComponentComponent implements OnInit {
   articleFeatureDiv: any;
   loadingGlobalExplanations: boolean = false;
   query: any;
-  featureWeight: any[] = [2,2,2,2,2];
+  featureWeight: any[] = [2, 2, 2, 2, 2];
   isArticleExplanation = false;
-  interestingClusters:any[] = [];
-  notInterestingClusters:any[] = [];
+  interestingClusters: any[] = [];
+  notInterestingClusters: any[] = [];
   configuration: string | undefined;
   clickedPoint: any;
   localExplanations: any;
@@ -39,17 +39,17 @@ export class HomeComponentComponent implements OnInit {
 
   constructor(private dataService: DataServiceService,
     private changeDetectorRef: ChangeDetectorRef,
-    private spinner: NgxSpinnerService,private router: Router
-    ) {}
+    private spinner: NgxSpinnerService, private router: Router
+  ) { }
 
   ngOnInit() {
     setTimeout(() => {
       // Code to execute after 5 seconds
       const sessionId = this.dataService.getSessionId();
-      if(sessionId){
+      if (sessionId) {
         this.getDataSourceFromAPI();
       }
-      else{
+      else {
         this.router.navigateByUrl('/login');
       }
     }, 3000);
@@ -61,17 +61,17 @@ export class HomeComponentComponent implements OnInit {
     });
   }
 
-  getDataFromSource(event: any,query: string | undefined){
+  getDataFromSource(event: any) {
     this.spinner.show();
     this.source = event.target.value;
     zip(
       this.dataService.getDataLabels(this.source),
-      this.dataService.getData(this.source,query),
+      this.dataService.getData(this.source),
       //this.dataService.getGlobalExplanations(this.source),
       this.dataService.getFeatureDivision(this.source)
     ).subscribe(([response1, response2, response3]) => {
       this.labels = response1;
-      this.clusterNumbers = Array.from({length: this.labels}, (_, i) => `Cluster ${i}`);
+      this.clusterNumbers = Array.from({ length: this.labels }, (_, i) => `Cluster ${i}`);
       this.data = response2;
       //this.globalExplanations = response3;
       this.articleFeatureDiv = response3;
@@ -79,43 +79,43 @@ export class HomeComponentComponent implements OnInit {
     });
   }
 
-  getGlobalExplanation(){
-    if(this.selectedExplanationType=='global' && this.systemOption!='Select System'){
-      if(this.globalExplanations && this.globalExplanationsA && this.systemOption=='A'){
+  getGlobalExplanation() {
+    if (this.selectedExplanationType == 'global' && this.systemOption != 'Select System') {
+      if (this.globalExplanations && this.globalExplanationsA && this.systemOption == 'A') {
         this.globalExplanations = this.globalExplanationsA;
         return;
       }
-      else if(this.globalExplanations && this.globalExplanationsB && this.systemOption=='B'){
+      else if (this.globalExplanations && this.globalExplanationsB && this.systemOption == 'B') {
         this.globalExplanations = this.globalExplanationsB;
         return;
       }
       console.log('Global Explanation on the way');
       this.loadingGlobalExplanations = true;
-      this.dataService.getGlobalExplanations(this.source,this.systemOption)
-      .subscribe(response => {
-        //console.log(response);
-        this.globalExplanations = response;
-        this.loadingGlobalExplanations = false;
-        if(this.systemOption=='A'){
-          this.globalExplanationsA = response;
-        }
-        else if(this.systemOption=='B'){
-          this.globalExplanationsB = response;
-        }
-      });
+      this.dataService.getGlobalExplanations(this.source, this.systemOption)
+        .subscribe(response => {
+          //console.log(response);
+          this.globalExplanations = response;
+          this.loadingGlobalExplanations = false;
+          if (this.systemOption == 'A') {
+            this.globalExplanationsA = response;
+          }
+          else if (this.systemOption == 'B') {
+            this.globalExplanationsB = response;
+          }
+        });
     }
   }
 
 
-  selectedClusterNumberChange(){
-    this.dataService.getArticlesForCluster(this.source,this.selectedGlobalCluster)
-    .subscribe(articles => this.articles = articles);
+  selectedClusterNumberChange() {
+    this.dataService.getArticlesForCluster(this.source, this.selectedGlobalCluster)
+      .subscribe(articles => this.articles = articles);
   }
 
   onDropdownChange() {
     if (this.article1 && this.article2) {
-      this.dataService.getLocalExplanations(this.source,this.article1,this.article2)
-      .subscribe(result => this.localExplanations = result);
+      this.dataService.getLocalExplanations(this.source, this.article1, this.article2)
+        .subscribe(result => this.localExplanations = result);
     }
   }
 
@@ -124,28 +124,39 @@ export class HomeComponentComponent implements OnInit {
     this.changeDetectorRef.detectChanges();
   }
 
-  handleExpButtonClick(){
+  handleExpButtonClick() {
     this.explanation_dd = !this.explanation_dd;
     this.user_feedback_dd = false
   }
 
-  handleUserFeedButtonClick(){
+  handleUserFeedButtonClick() {
     this.user_feedback_dd = !this.user_feedback_dd;
     this.explanation_dd = false
   }
 
-  search(){
+  search() {
     console.log(this.query);
     //this.getDataFromSource({target:{value:this.source}},this.query);
-    this.dataService.getData(this.source,this.query).subscribe(response => this.data = response)
+    //this.dataService.getExpandedQuery(this.source,this.query);
+    //this.dataService.getData(this.source).subscribe(response => this.data = response);
+    this.dataService.getExpandedQuery(this.source, this.query)
+      .subscribe(() => {
+        this.dataService.getData(this.source)
+          .subscribe(
+            response => {
+              this.data = response;
+              // The rest of your code to handle the response
+            }
+          )
+      });
   }
 
-  onFeatureReweighting(value: any):void {
+  onFeatureReweighting(value: any): void {
     console.log(value);
     this.featureWeight = value;
   }
 
-  recluster(){
+  recluster() {
     const result = this.dataService.getUserFeedbacks();
     //this.query = '';
     this.globalExplanationsA = undefined;
@@ -153,12 +164,12 @@ export class HomeComponentComponent implements OnInit {
     console.log(result);
     this.spinner.show();
     this.configuration = undefined;
-    this.dataService.reClusterWords(this.articleFeatureDiv,this.source,this.featureWeight,result['interestingClusters'],result['notInterestingClusters'],result['relevantDocs'],result['notRelevantDocs']).subscribe(
+    this.dataService.reClusterWords(this.articleFeatureDiv, this.source, this.featureWeight, result['interestingClusters'], result['notInterestingClusters'], result['relevantDocs'], result['notRelevantDocs']).subscribe(
       result => {
-      console.log('The dialog was closed', result);
-      this.spinner.hide();
-      this.getDataFromSource({target:{value:this.source}},undefined);
-    });
+        console.log('The dialog was closed', result);
+        this.spinner.hide();
+        this.getDataFromSource({ target: { value: this.source } });
+      });
     //console.log(this.featureWeight);
   }
 }

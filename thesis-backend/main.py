@@ -13,6 +13,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression
 from yellowbrick.cluster import KElbowVisualizer
 from sklearn.manifold import TSNE
+from nltk.corpus import stopwords
 import numpy as np
 import random
 import joblib
@@ -60,7 +61,7 @@ def create_session(system):
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    logger.info("Session created")
+    logger.info("Session created ")
     logger.info('System accessed is '+ str(system))
 
     src = [R2_path,R5_path,Trec_path]
@@ -79,6 +80,47 @@ def read_sources():
     logger.info("Read all the sources")
     return ['R2','R5','TREC']
 
+def expand_query_glove(original_query, embeddings_dict, num_expansion_terms=8, similarity_threshold=0.5):
+    # Tokenize and preprocess the original query
+    query_terms = original_query.lower().split()
+    # Remove stop words or other irrelevant terms from the query_terms if needed
+    # Remove punctuation
+    query_terms = [term.translate(str.maketrans('', '', string.punctuation)) for term in query_terms]
+
+    # Remove stop words
+    stop_words = set(stopwords.words('english'))
+    query_terms = [term for term in query_terms if term not in stop_words]
+    # Convert each query term to its GloVe vector representation
+    query_vectors = [embeddings_dict.get(term, np.zeros_like(next(iter(embeddings_dict.values())))) for term in query_terms]
+
+    # Calculate the similarity between each query term and all other words in the vocabulary
+    similarities = cosine_similarity(query_vectors, list(embeddings_dict.values()))
+
+    # Select expansion terms based on similarity scores
+    expansion_terms = []
+    for i in range(len(query_terms)):
+        similar_words = [word for word, similarity in zip(embeddings_dict.keys(), similarities[i]) if similarity > similarity_threshold]
+        top_similar_words = sorted(similar_words, key=lambda word: similarities[i][list(embeddings_dict.keys()).index(word)], reverse=True)[:num_expansion_terms]
+        expansion_terms.extend(top_similar_words)
+
+        # Remove punctuation and stop words from expansion terms
+    expansion_terms = [term.translate(str.maketrans('', '', string.punctuation)) for term in expansion_terms]
+    expansion_terms = [term for term in expansion_terms if term not in stop_words]
+
+    # Expand the original query by adding the expansion terms
+    expanded_query = ' '.join(query_terms) + ' ' + ' '.join(expansion_terms)
+
+    return expanded_query.lower()
+
+@app.get("/expand_query/{sessionId}/{source}/{query}")
+def expand_query(sessionId,source,query):
+  logger.info('Original Query ' + str(query))
+  glove_path = backend_path + sessionId + '/' + source + '/glove_vectors.pkl'
+  embeddings_dict = joblib.load(glove_path)
+  query = expand_query_glove(query,embeddings_dict)
+  logger.info('Expanded Query ' + str(query))
+  return query
+
 def search(sessionId,source,query):
   vectorizer_path = backend_path + sessionId + '/' + source + '/vectorizer.pkl'
   tfidf_matrix_path = backend_path + sessionId + '/' + source + '/tfidf_matrix.pkl'
@@ -91,8 +133,8 @@ def search(sessionId,source,query):
 
 
 
-@app.get("/sources/{sessionId}/{source}/{query}")
-def read_book_level_scatter(sessionId,source,query):
+@app.get("/book_level_scatter/{sessionId}/{source}/{query}")
+def read_book_level_scatter(sessionId,source,query='undefined'):
     logger_string = 'Reading the ' + str(source) + ' result file'
     logger.info(logger_string)
     path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
@@ -121,9 +163,13 @@ def get_famous_words(df,indices):
   unique_words = []
   word_counts = {}
   cluster_words = {}
+  stopwords_list = set(stopwords.words('english'))
+  additional_words = ['say', 'put', 'tell', 'hear', 'set', 'end', 'trend','ask','talk']
+  stopwords_list.update(additional_words)
   for i in indices:
     for j in set(df[df.Article_no==i].Events.values):
-      unique_words.append(j) 
+        filtered_words = [word for word in j.split() if word.lower() not in stopwords_list]
+        unique_words.extend(filtered_words)
   for i,j in Counter(unique_words).most_common(15):
     word_counts[i] = j 
     cluster_words[i] = 1
@@ -183,7 +229,7 @@ def get_global_explanations(clusters,result_df,input_path,data_path):
       result_words = []
       for quer in query:
         result_words.extend(get_common_bigram(quer,all_bigrams))
-      clusterData['Cluster '+str(k)][facets[i]] = result_words
+      clusterData['Cluster '+str(k)][facets[i]] = ', '.join(result_words)
   return clusterData
 
 @app.get("/global_explanations/{sessionId}/{source}/{system}")
@@ -318,7 +364,7 @@ def read_vectors(df):
   vectors = np.vstack(vectors)
   return vectors
 
-def generate_random_words(facet):
+"""def generate_random_words(facet):
   what_list = ["question", "mystery", "answer", "fact", "information", "knowledge", "puzzle", "riddle", "enigma",
              "solution", "query", "concept", "phenomenon", "thing", "object", "idea", "task", "challenge",
              "occurrence", "incident", "happening", "event", "episode", "circumstance", "situation", "scenario",
@@ -384,45 +430,46 @@ def generate_random_words(facet):
       words.extend(random.sample(who_list, 2))
     
   return words
+  """
 
 
 @app.get("/get_facet_explanation/{sessionId}/{selectedSystem}/{source}/{facet}/{article_no}")
 def get_facet_explanation(sessionId,selectedSystem,source,facet,article_no):
   facet, label = facet.split(' ')
   logger.info('Fetching facet explanation for ' + str(selectedSystem) + ' and source' + str(source) + ' for facet ' + str(facet) + ' article num ' + str(article_no))
-  if((selectedSystem == 'System Red' and source == 'R5') or (selectedSystem == 'System Blue' and source == 'TREC')):
-    logger.info('Getting correct facet explanation')
-    if('Whats' in facet):
-      words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
-    elif ('Wheres' in facet):
-      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_wheres_k_x_means_labelled.parquet.gzip')
-    elif ('Events' in facet):
-      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_events_k_x_means_labelled.parquet.gzip')
-    elif ('Whens' in facet):
-      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whens_k_x_means_labelled.parquet.gzip')
-    elif ('Whos' in facet):
-      words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whos_k_x_means_labelled.parquet.gzip')
-    mask = (words_df['Article_no'] == int(article_no)) & (words_df['k_labels'] == int(label))
-    all_events = np.unique(words_df.loc[mask].Events.values)
-    words_df = words_df[words_df['k_labels'] == int(label)]
-    words_df_without_duplicates = words_df.drop_duplicates(subset=['Events'])
-    words_df_without_duplicates = words_df_without_duplicates.reset_index()
-    words_df_without_duplicates = words_df_without_duplicates[~words_df_without_duplicates.Events.isin(all_events)]
-    all_words = []
-    all_vecs = read_vectors(words_df_without_duplicates)
-    for word in all_events:
-      vector = read_ind_vectors(words_df[words_df.Events==word].vectors.values[0])
-      if(int(20/len(all_events))<5):
-        k = 5
-      else:
-        k = int(20/len(all_events))
-      indices = find_closest_rows(all_vecs,vector,k)
-      parent_names = words_df_without_duplicates.iloc[indices]['Parent_Words'].values
-      all_words.append(word)
-      all_words.extend(parent_names)
-  else:
-    logger.info('Getting random facet explanation')
-    all_words = generate_random_words(facet)
+  #if((selectedSystem == 'System Red' and source == 'R5') or (selectedSystem == 'System Blue' and source == 'TREC')):
+  logger.info('Getting correct facet explanation')
+  if('Whats' in facet):
+    words_df = pd.read_parquet(backend_path + sessionId + '/' + source + '/all_whats_k_x_means_labelled.parquet.gzip')
+  elif ('Wheres' in facet):
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_wheres_k_x_means_labelled.parquet.gzip')
+  elif ('Events' in facet):
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_events_k_x_means_labelled.parquet.gzip')
+  elif ('Whens' in facet):
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whens_k_x_means_labelled.parquet.gzip')
+  elif ('Whos' in facet):
+    words_df = pd.read_parquet(backend_path+ sessionId + '/' + source + '/all_whos_k_x_means_labelled.parquet.gzip')
+  mask = (words_df['Article_no'] == int(article_no)) & (words_df['k_labels'] == int(label))
+  all_events = np.unique(words_df.loc[mask].Events.values)
+  words_df = words_df[words_df['k_labels'] == int(label)]
+  words_df_without_duplicates = words_df.drop_duplicates(subset=['Events'])
+  words_df_without_duplicates = words_df_without_duplicates.reset_index()
+  words_df_without_duplicates = words_df_without_duplicates[~words_df_without_duplicates.Events.isin(all_events)]
+  all_words = []
+  all_vecs = read_vectors(words_df_without_duplicates)
+  for word in all_events:
+    vector = read_ind_vectors(words_df[words_df.Events==word].vectors.values[0])
+    if(int(20/len(all_events))<5):
+      k = 5
+    else:
+      k = int(20/len(all_events))
+    indices = find_closest_rows(all_vecs,vector,k)
+    parent_names = words_df_without_duplicates.iloc[indices]['Parent_Words'].values
+    all_words.append(word)
+    all_words.extend(parent_names)
+  #else:
+    #logger.info('Getting random facet explanation')
+    #all_words = generate_random_words(facet)
   data = []
   
   # check if the word cloud is empty
@@ -536,8 +583,8 @@ def get_elbow_k(vectors,config):
   visualizer.fit(vectors) 
   return visualizer.elbow_value_
 
-def get_kmeans_clusters(k,importance,data):
-  data_weighted = data * importance
+def get_kmeans_clusters(k,data):
+  data_weighted = data
   kmeans = KMeans(n_clusters=k, random_state=0).fit(data_weighted)
   data_labels = kmeans.predict(data_weighted)
   #data_transformed = kmeans.transform(data)
@@ -548,17 +595,17 @@ def get_tsne(data,perplexity_value):
   components = tsne.fit_transform(data)
   return components
 
-def get_clustering_labels(data,importance,k_config=0,elbow_config=0):
+def get_clustering_labels(data,k_config=0,elbow_config=0):
   if(k_config==0):
     k = get_elbow_k(data,elbow_config) 
   else:
     k=k_config
-  k_means_data_labels = get_kmeans_clusters(k,importance,data)
+  k_means_data_labels = get_kmeans_clusters(k,data)
   result = pd.DataFrame(k_means_data_labels,columns=['k_labels'])
   return result
 
-def get_book_level_clustering(k_final_vectors,importance,k):
-  k_result = get_clustering_labels(k_final_vectors,importance,k)
+def get_book_level_clustering(k_final_vectors,k):
+  k_result = get_clustering_labels(k_final_vectors,k)
   return k_result
 
 def find_normalized_value(values):
@@ -583,6 +630,7 @@ def calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,glob
     logger.info('Actual Weights')
     if(x_train is not None):
       similarity_weights = run_logistic_regression(x_train,y_train)
+      resultant_vector = similarity_weights
     n = 0
     for i,weight in enumerate(global_weights):
       weight = int(weight)
@@ -603,7 +651,7 @@ def calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,glob
     global_value = all_weight
     if(len(all_weight_set)!=1):
       global_value = find_normalized_value(all_weight)
-    resultant_vector = similarity_weights + global_value / 2
+      resultant_vector = similarity_weights + global_value / 2
     if increase_local_weights!=None:
       increase_weights = [feature_sizes_k.index(local_weight) for local_weight in increase_local_weights]
       for i in increase_weights:
@@ -614,10 +662,17 @@ def calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,glob
         resultant_vector[i] = resultant_vector[i] * (0.5)
     #print(resultant_vector)
     return resultant_vector
-  else:
-    logger.info('Random Weights')
-    random_nums = np.random.uniform(0, 5, size=all_weight.shape)
-    all_weight = np.where(all_weight == 1, random_nums, all_weight)
+  elif(selectedSystem == 'System Red' and source == 'TREC'):
+    logger.info('Random Weights for Red and TREC')
+    #random_nums = np.random.uniform(-5000, 5000, size=(6000, 1))
+    random_array = np.random.uniform(0, 500, size=len(all_weight))
+    all_weight = np.where(all_weight == 1, random_array, all_weight)
+    return all_weight
+  elif(selectedSystem == 'System Blue' and source == 'R5'):
+    logger.info('Random Weights for Blue and R5')
+    #random_nums = np.random.uniform(-5000, 5000, size=(6807, 1))
+    random_array = np.random.uniform(0, 500, size=len(all_weight))
+    all_weight = np.where(all_weight == 1, random_array, all_weight)
     return all_weight
 
 def generate_training_data(data,relevance,not_relevance):
@@ -634,10 +689,12 @@ def get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not
     y_train = None
     if(len(relevant_docs)>0):
       x_train, y_train = generate_training_data(k_final_vectors,relevant_docs,not_relevant_docs)
-    importance = calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,global_weights,increase_local_weights)
+    importance = calculate_weights(selectedSystem,source,feature_sizes_k,x_train,y_train,global_weights,increase_local_weights,decrease_local_weights)
+    logger.info('The importance vectors are ' + str(importance))
     if importance is None:
         importance = np.ones(k_final_vectors.shape[1])
-    return k_final_vectors,importance
+    k_final_vectors = k_final_vectors * importance
+    return k_final_vectors
 
 
 def get_nearest_neighbours(relevant_docs,res_df):
@@ -681,28 +738,28 @@ def recluster(sessionId,selectedSystem,source,feature_sizes_k,relevant_docs,not_
     intersection = set1.intersection(set2)
     percentage = len(intersection) / len(old_relevance) * 100
     logger.info(f"Percentage of list2 elements present in list1: {percentage:.2f}%")
-    print(old_relevance)
+    #print(old_relevance)
     logger.info('Old Relevance documents are ' + str(old_relevance.article_no.to_list()))
     all_docs = result_df[result_df.highlight==1].index
     not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
     logger.info('Relevant documents are ' + str(relevant_docs))
-    print(relevant_docs)
+    #print(relevant_docs)
     logger.info('All documents are ' + str(all_docs))
-    print(all_docs)
+    #print(all_docs)
     logger.info('Not Relevant documents are ' + str(not_relevant_docs))
-    print(not_relevant_docs)
-  k_final_vectors,importance = get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights)
+    #print(not_relevant_docs)
+  k_final_vectors = get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not_relevant_docs,global_weights,source,increase_local_weights,decrease_local_weights)
   if(source=='R2'):
-    labels_df = get_book_level_clustering(k_final_vectors,importance,2)
+    labels_df = get_book_level_clustering(k_final_vectors,2)
   elif(source=='R5'):
-    labels_df = get_book_level_clustering(k_final_vectors,importance,5)
+    labels_df = get_book_level_clustering(k_final_vectors,5)
   elif(source=='TREC'):
-    labels_df = get_book_level_clustering(k_final_vectors,importance,11)
+    labels_df = get_book_level_clustering(k_final_vectors,11)
   tsne_df = pd.DataFrame(get_tsne(k_final_vectors,20),columns=['x_axis','y_axis'])
   result = pd.concat([pd.DataFrame(k_final_vectors),labels_df,tsne_df],axis=1)
   nearest_neighbors = get_nearest_neighbours(relevant_docs,result)
   logger.info('Nearest Neighbour ' + str(nearest_neighbors))
-  print(nearest_neighbors)
+  #print(nearest_neighbors)
   if(len(relevant_docs)>0):
     result['relevance'] = np.zeros(len(result))
     result['highlight'] = np.zeros(len(result))

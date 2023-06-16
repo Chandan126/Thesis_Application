@@ -14,6 +14,7 @@ export class FacetExplanationComponentComponent implements OnInit{
   isWordClick = false;
   clickedBar: any;
   clickedWord: any;
+  importantWords: string[];
   //@Output() public clusterFeedback: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,private dataService: DataServiceService, private dialogRef: MatDialogRef<FacetExplanationComponentComponent>, private ngZone: NgZone) { 
@@ -27,6 +28,7 @@ export class FacetExplanationComponentComponent implements OnInit{
     this.dataService.getArticleContent(this.data.source,this.data.selected_article).subscribe(data => {
       this.content = data;
     });
+    this.importantWords = this.dataService.getQuery().split(" ");
   }
 
   onBarClicked(value: any): void {

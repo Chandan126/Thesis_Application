@@ -1,7 +1,7 @@
 <div class="container">
     <div class = 'scatter-dropdown'>
       <label for="data-source" class="scatter-label" >Select Data Source:       </label>
-      <select class="datasource-dropdown" (change)="getDataFromSource($event,undefined)">
+      <select class="datasource-dropdown" (change)="getDataFromSource($event)">
         <option class="datasource-options" *ngFor="let dataSource of dataSources" [value]="dataSource">
           {{ dataSource }}
         </option>
@@ -25,13 +25,13 @@
       <button mat-button class="configuration-button" (click)="handleUserFeedButtonClick()">User Feedback</button>
       <div *ngIf="explanation_dd">
         <select class="explanation-button" [(ngModel)]="systemOption" (change)="getGlobalExplanation()">
-          <option>Select System</option>
-          <option value="A">System A</option>
-          <option value="B">System B</option>
+          <option>Select Explanation Type</option>
+          <option value="A">Type A</option>
+          <option value="B">Type B</option>
         </select>
         <select class="explanation-button" [(ngModel)]="selectedExplanationType" (change)="getGlobalExplanation()">
-          <option value="local">Local Explanation</option>
-          <option value="global">Global Explanation</option>
+          <option value="local">Within Cluster Explanation</option>
+          <option value="global">Cluster Explanation</option>
         </select>
         <br><br>
         <div *ngIf="selectedExplanationType==='global'; else localExplanation">

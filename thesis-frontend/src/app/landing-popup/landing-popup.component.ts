@@ -19,8 +19,8 @@ export class LandingPopupComponent implements OnInit{
     console.log('Login Started');
   }
 
-  login() {
-    this.dataService.initSession(this.selectedSystem);
+  async login() {
+    await this.dataService.initSession(this.selectedSystem);
     //this.dialogRef.close();
     this.router.navigateByUrl('/home');
   }

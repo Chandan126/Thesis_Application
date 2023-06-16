@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
@@ -11,14 +12,32 @@ export class DataServiceService {
   notRelevantDocs: any[] = [];
   interestingClusters: any[] = [];
   notinterestingClusters: any[] = [];
+  query: any = 'undefined';
   constructor(private http: HttpClient) { }
 
-  initSession(system: string){
+  /*initSession(system: string){
     this.selectedSystem = system;
     return this.http.get(`http://127.0.0.1:8000/session/${system}`).subscribe((data) => {
       this.sessionId = data;
       localStorage.setItem('sessionId', this.sessionId.sessionId);
       console.log(`Session started ${this.sessionId.sessionId}`);
+    });
+  }*/
+
+  initSession(system: string): Promise<void> {
+    this.selectedSystem = system;
+    return new Promise<void>((resolve, reject) => {
+      this.http.get<any>(`http://127.0.0.1:8000/session/${system}`).subscribe(
+        (data) => {
+          this.sessionId = data;
+          localStorage.setItem('sessionId', this.sessionId.sessionId);
+          console.log(`Session started ${this.sessionId.sessionId}`);
+          resolve(); // Resolve the promise when the request completes successfully
+        },
+        (error) => {
+          reject(error); // Reject the promise if the request encounters an error
+        }
+      );
     });
   }
 
@@ -55,8 +74,29 @@ export class DataServiceService {
     return this.http.get('http://127.0.0.1:8000/sources');
   }
 
-  getData(source: string,query: string|undefined){
-    return this.http.get(`http://127.0.0.1:8000/sources/${this.sessionId.sessionId}/${source}/${query}`);
+  /*getExpandedQuery(source:string,query: string){
+    return this.http.get(`http://127.0.0.1:8000/expand_query/${this.sessionId.sessionId}/${source}/${query}`).subscribe((data) => {
+      this.query = data;
+      console.log(`Expanded Query is ${this.query}`);
+    });
+  }*/
+
+  getQuery() {
+    return this.query;
+  }
+
+  getExpandedQuery(source: string, query: string): Observable<any> {
+    return this.http.get(`http://127.0.0.1:8000/expand_query/${this.sessionId.sessionId}/${source}/${query}`)
+      .pipe(
+        tap(data => {
+          this.query = data;
+          console.log(`Expanded Query is ${this.query}`);
+        })
+      );
+  }
+
+  getData(source: string){
+    return this.http.get(`http://127.0.0.1:8000/book_level_scatter/${this.sessionId.sessionId}/${source}/${this.query}`);
   }
 
   getDataLabels(source: string){
@@ -96,6 +136,12 @@ export class DataServiceService {
   }
 
   logout(){
+    this.query = '';
+    this. relevantDocs = [];
+    this.selectedSystem= '';
+    this.notRelevantDocs = [];
+    this.interestingClusters = [];
+    this.notinterestingClusters  = [];
     return this.http.get(`http://127.0.0.1:8000/logout/${this.sessionId.sessionId}`);
   }
 
