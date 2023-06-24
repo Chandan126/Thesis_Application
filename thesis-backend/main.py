@@ -733,15 +733,16 @@ def recluster(sessionId,selectedSystem,source,feature_sizes_k,relevant_docs,not_
   if(len(relevant_docs)>0):
     result_df = pd.read_parquet(output_path)
     old_relevance = result_df[(result_df['highlight'] == 1.0) & (result_df['relevance'] == 1.0)]
-    set1 = set(old_relevance.article_no.to_list())
-    set2 = set(relevant_docs)
-    intersection = set1.intersection(set2)
-    percentage = len(intersection) / len(old_relevance) * 100
+    #set1 = set(old_relevance.article_no.to_list())
+    #set2 = set(relevant_docs)
+    #intersection = set1.intersection(set2)
+    percentage = (len(relevant_docs) / (len(relevant_docs) + len(not_relevant_docs))) * 100
     logger.info(f"Percentage of list2 elements present in list1: {percentage:.2f}%")
     #print(old_relevance)
     logger.info('Old Relevance documents are ' + str(old_relevance.article_no.to_list()))
     all_docs = result_df[result_df.highlight==1].index
-    not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
+    if(len(not_relevant_docs)==0):
+      not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
     logger.info('Relevant documents are ' + str(relevant_docs))
     #print(relevant_docs)
     logger.info('All documents are ' + str(all_docs))
