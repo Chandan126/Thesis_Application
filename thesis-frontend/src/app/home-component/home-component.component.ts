@@ -11,7 +11,7 @@ import { zip, Subscription } from 'rxjs';
 })
 export class HomeComponentComponent implements OnInit {
   dataSources: any;
-  systemOption: any = 'Select System';
+  systemOption: any = '0';
   source: any;
   labels: any;
   clusterNumbers: any = [];
@@ -80,7 +80,7 @@ export class HomeComponentComponent implements OnInit {
   }
 
   getGlobalExplanation() {
-    if (this.selectedExplanationType == 'global' && this.systemOption != 'Select System') {
+    if (this.selectedExplanationType == 'global' && this.systemOption != '0') {
       if (this.globalExplanations && this.globalExplanationsA && this.systemOption == 'A') {
         this.globalExplanations = this.globalExplanationsA;
         return;

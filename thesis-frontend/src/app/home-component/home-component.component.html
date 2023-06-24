@@ -14,7 +14,7 @@
       </ngx-spinner>
     </div>
 
-    <div>
+    <div class="plotlyContainer">
       <app-plotly-component [data]="data" [labels]="labels" [articleFeatureDiv]="articleFeatureDiv" [source]="source"></app-plotly-component>
       <!-- <app-scatter-component [data]="data" [labels]="labels" [articleFeatureDiv]="articleFeatureDiv" [source]="source"></app-scatter-component> -->
     </div>
@@ -25,7 +25,7 @@
       <button mat-button class="configuration-button" (click)="handleUserFeedButtonClick()">User Feedback</button>
       <div *ngIf="explanation_dd">
         <select class="explanation-button" [(ngModel)]="systemOption" (change)="getGlobalExplanation()">
-          <option>Select Explanation Type</option>
+          <option value="0">Select Explanation Type</option>
           <option value="A">Type A</option>
           <option value="B">Type B</option>
         </select>

@@ -34,8 +34,8 @@ export class PlotlyComponentComponent {
 
   public graph_layout = {
     title: 'Articles',
-    width: 1500, // Width of the graph
-    height: 750, // Height of the graph
+    width: 1200, // Width of the graph
+    height: 650, // Height of the graph
     xaxis: {
       showline: false, // hide the x-axis line
       showticklabels: true, // show x-axis labels
