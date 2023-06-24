@@ -20,9 +20,14 @@ export class LandingPopupComponent implements OnInit{
   }
 
   async login() {
-    await this.dataService.initSession(this.selectedSystem);
-    //this.dialogRef.close();
-    this.router.navigateByUrl('/home');
+    if(this.selectedSystem == undefined || this.selectedSystem == null || this.selectedSystem == '') {
+      alert("Please select a system!");
+    } else {
+      await this.dataService.initSession(this.selectedSystem);
+      //this.dialogRef.close();
+      this.router.navigateByUrl('/home');
+    }
+    
   }
 
   /*logout() {
