@@ -24,6 +24,8 @@ export class PlotlyComponentComponent {
 
   showPlot = false;
 
+  isPlotlyRendered: Boolean = false;
+
   constructor(public dialog: MatDialog, private zone: NgZone) {
     this.data = [];
     console.log(this.data);
@@ -111,9 +113,10 @@ export class PlotlyComponentComponent {
 
 // assign a on-click event when a specific point is being clicked.
 assignClickEvent() {
-  if (this.plotlyComponent && this.plotlyComponent.plotlyInstance) {
+  if (this.plotlyComponent && this.plotlyComponent.plotlyInstance && !this.isPlotlyRendered ) {
+    this.isPlotlyRendered = true;
     this.plotlyComponent.plotlyInstance.on('plotly_click', (data: any) => {
-      data.event.stopPropagation();
+      // data.event.stopPropagation();
       let clickedPoints: number[] = []; // Track the clicked points
 
       // Loop through the clicked points
@@ -142,12 +145,12 @@ assignClickEvent() {
     });
   }
 }
-
   ngOnChanges(): void {
     const colours = ['blue', 'red', 'orange', 'green', 'yellow', 'purple', 'pink', 'black', 'turquoise', 'crimson'];
     const generateDatasets: any = [];
     console.log(this.data);
     this.generateTraces();
   }
+
 
 }
