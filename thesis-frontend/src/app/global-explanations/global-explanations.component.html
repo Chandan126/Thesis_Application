@@ -1,15 +1,15 @@
 <div class="lines" *ngIf="clusterNumber && globalExplanations">
     <ng-container *ngIf="globalExplanations[clusterNumber]['Events']">
         <span class="line2">{{clusterNumber}}</span> comprises of<br><br><br>
-        <span class="line1">Events</span> such as<br><br>
+        <span class="line1">Incidents</span> such as<br><br>
         <span class="line2" [innerHTML]="globalExplanations[clusterNumber]['Events'] | highlightWords: importantWords"></span><br><br><br>
-        <span class="line1">Whats</span> such as<br><br>
+        <span class="line1">Specifics</span> such as<br><br>
         <span class="line2" [innerHTML]="globalExplanations[clusterNumber]['Whats'] | highlightWords: importantWords"></span><br><br><br>
-        <span class="line1">Whens</span> such as<br><br>
+        <span class="line1">Timelines</span> such as<br><br>
         <span class="line2" [innerHTML]="globalExplanations[clusterNumber]['Whens'] | highlightWords: importantWords"></span><br><br><br>
-        <span class="line1">Wheres</span> such as<br><br>
+        <span class="line1">Places</span> such as<br><br>
         <span class="line2" [innerHTML]="globalExplanations[clusterNumber]['Wheres'] | highlightWords: importantWords"></span><br><br><br>
-        <span class="line1">Whos</span> such as<br><br>
+        <span class="line1">Personalities</span> such as<br><br>
         <span class="line2" [innerHTML]="globalExplanations[clusterNumber]['Whos'] | highlightWords: importantWords"></span><br><br><br>
     </ng-container>
     <ng-container *ngIf="!globalExplanations[clusterNumber]['Events']">

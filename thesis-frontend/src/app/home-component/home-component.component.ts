@@ -19,7 +19,7 @@ export class HomeComponentComponent implements OnInit {
   globalExplanations: any;
   globalExplanationsA: any;
   globalExplanationsB: any;
-  selectedExplanationType: string = 'local';
+  selectedExplanationType: string = '0';
   articles: any;
   selectedGlobalCluster: any;
   article1: any;

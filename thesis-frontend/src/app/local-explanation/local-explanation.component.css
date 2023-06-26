@@ -1,10 +1,10 @@
 .lines .line1 {
-    color: blue;
+    color: grey;
     font-weight: bold;
 }
 
 .lines .line2 {
-    color: red;
+    color: darksalmon;
     font-weight: bold;
 }
 

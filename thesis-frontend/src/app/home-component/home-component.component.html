@@ -26,10 +26,11 @@
       <div *ngIf="explanation_dd">
         <select class="explanation-button" [(ngModel)]="systemOption" (change)="getGlobalExplanation()">
           <option value="0">Select Explanation Type</option>
-          <option value="A">Type A</option>
-          <option value="B">Type B</option>
+          <option value="A">Explanation Type A</option>
+          <option value="B">Explanation Type B</option>
         </select>
         <select class="explanation-button" [(ngModel)]="selectedExplanationType" (change)="getGlobalExplanation()">
+          <option value="0">What explanation do you want to look at?</option>
           <option value="local">Within Cluster Explanation</option>
           <option value="global">Cluster Explanation</option>
         </select>
