@@ -12,7 +12,7 @@ services:
       - chandan_connection
     volumes:
       - "./thesis-backend/:/backend"
-      - "/home/srinath/Documents/tmp/chandan_tmp/:/backend/dirs_path"
+      - "C:/Studies/DataSources:/backend/dirs_path"
 
   frontend:
     build:

@@ -30,6 +30,7 @@ export class DataServiceService {
       this.http.get<any>(`http://127.0.0.1:8000/session/${system}`).subscribe(
         (data) => {
           this.sessionId = data;
+          this.query = 'undefined';
           localStorage.setItem('sessionId', this.sessionId.sessionId);
           console.log(`Session started ${this.sessionId.sessionId}`);
           resolve(); // Resolve the promise when the request completes successfully

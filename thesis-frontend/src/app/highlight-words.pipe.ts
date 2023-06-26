@@ -22,7 +22,7 @@ export class HighlightWordsPipe implements PipeTransform {
     /*const regex = new RegExp(`(${importantWords.join('|')})`, 'gi');
     const highlightedSentence = sentence.replace(regex, '<span class="highlight">$1</span>');
     return this.sanitizer.bypassSecurityTrustHtml(highlightedSentence);*/
-    const escapedWords = importantWords.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const escapedWords = importantWords.map(word => word.replace(/[.*+?^${}()|[\]\\<>]/g, '\\$&'));
     const regex = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'gi');
     const highlightedSentence = sentence.replace(regex, '<span class="highlight">$&</span>');
     return this.sanitizer.bypassSecurityTrustHtml(highlightedSentence);

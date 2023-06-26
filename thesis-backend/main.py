@@ -135,7 +135,7 @@ def search(sessionId,source,query):
 
 @app.get("/book_level_scatter/{sessionId}/{source}/{query}")
 def read_book_level_scatter(sessionId,source,query='undefined'):
-    logger_string = 'Reading the ' + str(source) + ' result file'
+    logger_string = 'Reading the ' + str(source) + ' result file '
     logger.info(logger_string)
     path = backend_path + sessionId + '/' + source + '/result.parquet.gzip'
     #print(query)
@@ -151,7 +151,7 @@ def read_book_level_scatter(sessionId,source,query='undefined'):
 
 @app.get("/labels/{source}")
 def get_label_number(source):
-    logger.info('Read the ' + str(source) + ' label numbers')
+    logger.info('Read the ' + str(source) + ' label numbers ')
     if(source=='R2'):
         return '2'
     elif(source=='R5'):
@@ -304,7 +304,7 @@ def fetch_local_explanations(sessionId,source,article1,article2):
 
 @app.get("/get_article_content/{sessionId}/{source}/{article}")
 def get_article_content(sessionId,source,article):
-    logger.info('Fetching article content for ' + str(source) + ' and article number' + str(article))
+    logger.info('Fetching article content for ' + str(source) + ' and article number ' + str(article))
     path = backend_path + sessionId + '/' + source + '/data.parquet.gzip'
     data_df = pd.read_parquet(path)
     article_data = data_df.iloc[int(article)].content
@@ -699,7 +699,7 @@ def get_final_vectors(sessionId,selectedSystem,feature_sizes_k,relevant_docs,not
 
 def get_nearest_neighbours(relevant_docs,res_df):
   relevant_docs_list = list(relevant_docs)
-  k = 5  # Number of nearest neighbors to find
+  k = 7  # Number of nearest neighbors to find
   nn = NearestNeighbors(n_neighbors=k)
   all_points = res_df[['x_axis', 'y_axis']].values
   nn.fit(all_points)
@@ -736,13 +736,13 @@ def recluster(sessionId,selectedSystem,source,feature_sizes_k,relevant_docs,not_
     #set1 = set(old_relevance.article_no.to_list())
     #set2 = set(relevant_docs)
     #intersection = set1.intersection(set2)
-    percentage = (len(relevant_docs) / (len(relevant_docs) + len(not_relevant_docs))) * 100
-    logger.info(f"Percentage of list2 elements present in list1: {percentage:.2f}%")
     #print(old_relevance)
     logger.info('Old Relevance documents are ' + str(old_relevance.article_no.to_list()))
     all_docs = result_df[result_df.highlight==1].index
     if(len(not_relevant_docs)==0):
       not_relevant_docs = [doc for doc in all_docs if doc not in relevant_docs and doc in result_df[result_df.highlight==1].index]
+    percentage = (len(relevant_docs) / (len(relevant_docs) + len(not_relevant_docs))) * 100
+    logger.info(f"Percentage of list2 elements present in list1: {percentage:.2f}%")
     logger.info('Relevant documents are ' + str(relevant_docs))
     #print(relevant_docs)
     logger.info('All documents are ' + str(all_docs))
